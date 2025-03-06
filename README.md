@@ -11,7 +11,6 @@ This project analyzes and forecasts air pollution levels using the UCI Air Quali
 ## Methods  
 - **SARIMAX + SAPRC Hybrid Model:** Time series forecasting with chemical reaction modeling  
 - **Neural Networks:** Multi-layer perceptrons for pollutant concentration prediction
-- 
 ## Goals  
 
 
