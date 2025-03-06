@@ -16,6 +16,9 @@ This project analyzes and forecasts air pollution levels using the UCI Air Quali
 
 ## Authors  
   **Duc Do**
+  
   **Thuan Khang Dinh**
+  
   **Parth A. Pansara**
+  
   **Felix Vo**
