@@ -15,7 +15,43 @@ if (!require("keras")) {
 }
 
 library("keras")
+# install_keras()
+install_keras(tensorflow = "latest")
+
 library("tidyverse")
+```
+```{R}
+# Install devtools
+install.packages("devtools")
+
+# Install tensorflow:
+devtools::install_github("rstudio/tensorflow")
+
+# install reticulate:
+install.packages("reticulate")
+
+library(reticulate)
+
+Sys.setenv(PATH = paste("C:/Users/DucDo/Anaconda3/Scripts", Sys.getenv("PATH"), sep=";"))
+
+use_condaenv("base")
+
+# use_condaenv("C:/Users/DucDo/Anaconda3/envs/base")
+
+# Python version
+# use_python("C:/Users/DucDo/Anaconda3/python.exe")
+
+# Python environment:
+# use_virtualenv("myenv")
+
+library(tensorflow)
+
+# Install tensorflow
+install_tensorflow()
+
+tf$print(
+  tf$constant('Hello, TensorFlow!')
+  )
 ```
 
 ```{R}
@@ -44,4 +80,60 @@ targets <- as.data.frame(lapply(targets, normalize))
 # Convert to matrices for Keras
 X <- as.matrix(predictors)
 Y <- as.matrix(targets)
+```
+
+```{R}
+set.seed(123)  # For reproducibility
+train_index <- sample(1:nrow(X), size = 0.8 * nrow(X))  # 80% train, 20% test
+
+X_train <- X[train_index, ]
+Y_train <- Y[train_index, ]
+
+X_test <- X[-train_index, ]
+Y_test <- Y[-train_index, ]
+
+```
+
+```{R}
+library(keras)
+
+# Define the input shape as a tuple (ncol(X),)
+model <- keras_model_sequential() %>%
+  layer_dense(units = 32, activation = "relu", input_shape = c(9)) %>%
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dense(units = ncol(Y))  # Multiple output nodes (one per target variable)
+
+# Compile the model
+model %>% compile(
+  loss = "mse",  # Mean Squared Error for regression
+  optimizer = optimizer_adam()
+  # metrics = c("mae")  # Mean Absolute Error
+)
+
+# library(keras)
+# install_keras()
+
+```
+
+```{R}
+history <- model %>% fit(
+  X_train, Y_train,
+  epochs = 100, batch_size = 32,
+  validation_split = 0.2,
+  verbose = 1
+)
+
+install_tensorflow()
+```
+
+
+```{R}
+model %>% evaluate(X_test, Y_test)
+
+```
+
+```{R}
+predictions <- model %>% predict(X_test)
+print(predictions[1:5, ])  # Show first 5 predictions
+
 ```

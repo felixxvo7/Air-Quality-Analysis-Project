@@ -1754,53 +1754,158 @@ display: none;
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaWYgKCFyZXF1aXJlKFwidGlkeXZlcnNlXCIpKSB7XG4gICAgaW5zdGFsbC5wYWNrYWdlcyhcInRpZHl2ZXJzZVwiKVxufVxuYGBgIn0= -->
-<pre class="r"><code>if (!require(&quot;tidyverse&quot;)) {
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBSIHZlcnNpb246IDQuNC4zXG5cbmlmICghcmVxdWlyZShcInRpZHl2ZXJzZVwiKSkge1xuICAgIGluc3RhbGwucGFja2FnZXMoXCJ0aWR5dmVyc2VcIilcbn1cblxuaWYgKCFyZXF1aXJlKFwia2VyYXNcIikpIHtcbiAgICBpbnN0YWxsLnBhY2thZ2VzKFwia2VyYXNcIilcbn1cblxubGlicmFyeShcImtlcmFzXCIpXG4jIGluc3RhbGxfa2VyYXMoKVxuaW5zdGFsbF9rZXJhcyh0ZW5zb3JmbG93ID0gXCJsYXRlc3RcIilcbmBgYCJ9 -->
+<pre class="r"><code># R version: 4.4.3
+
+if (!require(&quot;tidyverse&quot;)) {
     install.packages(&quot;tidyverse&quot;)
-}</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiB0aWR5dmVyc2VcbuKUgOKUgCBBdHRhY2hpbmcgY29yZSB0aWR5dmVyc2UgcGFja2FnZXMg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAIHRpZHl2ZXJzZSAyLjAuMCDilIDilIBcbuKclCBkcGx5ciAgICAgMS4xLjQgICAgIOKclCByZWFkciAgICAgMi4xLjVcbuKclCBmb3JjYXRzICAgMS4wLjAgICAgIOKclCBzdHJpbmdyICAgMS41LjFcbuKclCBnZ3Bsb3QyICAgMy41LjEgICAgIOKclCB0aWJibGUgICAgMy4yLjFcbuKclCBsdWJyaWRhdGUgMS45LjQgICAgIOKclCB0aWR5ciAgICAgMS4zLjFcbuKclCBwdXJyciAgICAgMS4wLjIgICAgIOKUgOKUgCBDb25mbGljdHMg4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAIHRpZHl2ZXJzZV9jb25mbGljdHMoKSDilIDilIBcbuKcliBkcGx5cjo6ZmlsdGVyKCkgbWFza3Mgc3RhdHM6OmZpbHRlcigpXG7inJYgZHBseXI6OmxhZygpICAgIG1hc2tzIHN0YXRzOjpsYWcoKVxu4oS5IFVzZSB0aGUgXHUwMDFiXTg7O2h0dHA6Ly9jb25mbGljdGVkLnItbGliLm9yZy9cdTAwMDdjb25mbGljdGVkIHBhY2thZ2VcdTAwMWJdODs7XHUwMDA3IHRvIGZvcmNlIGFsbCBjb25mbGljdHMgdG8gYmVjb21lIGVycm9yc1xuIn0= -->
-<pre><code>Loading required package: tidyverse
-── Attaching core tidyverse packages ──────────────────────────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.4     ✔ readr     2.1.5
-✔ forcats   1.0.0     ✔ stringr   1.5.1
-✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-✔ purrr     1.0.2     ── Conflicts ────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the ]8;;http://conflicted.r-lib.org/conflicted package]8;; to force all conflicts to become errors</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaWYgKCFyZXF1aXJlKFwia2VyYXNcIikpIHtcbiAgICBpbnN0YWxsLnBhY2thZ2VzKFwia2VyYXNcIilcbn1cbmBgYCJ9 -->
-<pre class="r"><code>if (!require(&quot;keras&quot;)) {
+}
+
+if (!require(&quot;keras&quot;)) {
     install.packages(&quot;keras&quot;)
-}</code></pre>
+}
+
+library(&quot;keras&quot;)
+# install_keras()
+install_keras(tensorflow = &quot;latest&quot;)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBrZXJhc1xuIn0= -->
-<pre><code>Loading required package: keras</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IGludmFsaWQgdmVyc2lvbiBzcGVjaWZpY2F0aW9uIOKAmGxhdGVzdOKAmVxuIn0= -->
+<pre><code>Error: invalid version specification ‘latest’</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcImtlcmFzXCIpXG5saWJyYXJ5KFwidGlkeXZlcnNlXCIpXG5gYGAifQ== -->
-<pre class="r"><code>library(&quot;keras&quot;)
-library(&quot;tidyverse&quot;)</code></pre>
+<!-- rnb-chunk-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBJbnN0YWxsIGRldnRvb2xzXG5pbnN0YWxsLnBhY2thZ2VzKFwiZGV2dG9vbHNcIilcbmBgYCJ9 -->
+<pre class="r"><code># Install devtools
+install.packages(&quot;devtools&quot;)</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gaW5zdGFsbC5wYWNrYWdlcyA6IFVwZGF0aW5nIGxvYWRlZCBwYWNrYWdlc1xuIn0= -->
+<pre><code>Error in install.packages : Updating loaded packages</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBJbnN0YWxsIHRlbnNvcmZsb3c6XG5kZXZ0b29sczo6aW5zdGFsbF9naXRodWIoXCJyc3R1ZGlvL3RlbnNvcmZsb3dcIilcbmBgYCJ9 -->
+<pre class="r"><code># Install tensorflow:
+devtools::install_github(&quot;rstudio/tensorflow&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiUmVnaXN0ZXJlZCBTMyBtZXRob2RzIG92ZXJ3cml0dGVuIGJ5ICdodG1sdG9vbHMnOlxuICBtZXRob2QgICAgICAgICAgICAgICBmcm9tICAgICAgICAgXG4gIHByaW50Lmh0bWwgICAgICAgICAgIHRvb2xzOnJzdHVkaW9cbiAgcHJpbnQuc2hpbnkudGFnICAgICAgdG9vbHM6cnN0dWRpb1xuICBwcmludC5zaGlueS50YWcubGlzdCB0b29sczpyc3R1ZGlvXG5SZWdpc3RlcmVkIFMzIG1ldGhvZCBvdmVyd3JpdHRlbiBieSAnaHRtbHdpZGdldHMnOlxuICBtZXRob2QgICAgICAgICAgIGZyb20gICAgICAgICBcbiAgcHJpbnQuaHRtbHdpZGdldCB0b29sczpyc3R1ZGlvXG5Vc2luZyBHaXRIdWIgUEFUIGZyb20gdGhlIGdpdCBjcmVkZW50aWFsIHN0b3JlLlxuRG93bmxvYWRpbmcgR2l0SHViIHJlcG8gcnN0dWRpby90ZW5zb3JmbG93QEhFQURcbiJ9 -->
+<pre><code>Registered S3 methods overwritten by &#39;htmltools&#39;:
+  method               from         
+  print.html           tools:rstudio
+  print.shiny.tag      tools:rstudio
+  print.shiny.tag.list tools:rstudio
+Registered S3 method overwritten by &#39;htmlwidgets&#39;:
+  method           from         
+  print.htmlwidget tools:rstudio
+Using GitHub PAT from the git credential store.
+Downloading GitHub repo rstudio/tensorflow@HEAD</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiVGhlc2UgcGFja2FnZXMgaGF2ZSBtb3JlIHJlY2VudCB2ZXJzaW9ucyBhdmFpbGFibGUuXG5JdCBpcyByZWNvbW1lbmRlZCB0byB1cGRhdGUgYWxsIG9mIHRoZW0uXG5XaGljaCB3b3VsZCB5b3UgbGlrZSB0byB1cGRhdGU/XG5cbiAxOiBBbGwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAyOiBDUkFOIHBhY2thZ2VzIG9ubHkgICAgICAgICAgICAgICAgICBcbiAzOiBOb25lICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiA0OiB3aXRociAgICAgICgzLjAuMSAgLT4gMy4wLjIgKSBbQ1JBTl1cbiA1OiBybGFuZyAgICAgICgxLjEuNCAgLT4gMS4xLjUgKSBbQ1JBTl1cbiA2OiBqc29ubGl0ZSAgICgxLjguOSAgLT4gMS45LjEgKSBbQ1JBTl1cbiA3OiBSY3BwICAgICAgICgxLjAuMTMgLT4gMS4wLjE0KSBbQ1JBTl1cbiA4OiBnbHVlICAgICAgICgxLjcuMCAgLT4gMS44LjAgKSBbQ1JBTl1cbiA5OiBjbGkgICAgICAgICgzLjYuMyAgLT4gMy42LjQgKSBbQ1JBTl1cbjEwOiByc3R1ZGlvYXBpICgwLjE2LjAgLT4gMC4xNy4xKSBbQ1JBTl1cbjExOiBSNiAgICAgICAgICgyLjUuMSAgLT4gMi42LjEgKSBbQ1JBTl1cbjEyOiBwcyAgICAgICAgICgxLjguMCAgLT4gMS45LjAgKSBbQ1JBTl1cbjEzOiBwcm9jZXNzeCAgICgzLjguNCAgLT4gMy44LjYgKSBbQ1JBTl1cbiJ9 -->
+<pre><code>These packages have more recent versions available.
+It is recommended to update all of them.
+Which would you like to update?
+
+ 1: All                                 
+ 2: CRAN packages only                  
+ 3: None                                
+ 4: withr      (3.0.1  -&gt; 3.0.2 ) [CRAN]
+ 5: rlang      (1.1.4  -&gt; 1.1.5 ) [CRAN]
+ 6: jsonlite   (1.8.9  -&gt; 1.9.1 ) [CRAN]
+ 7: Rcpp       (1.0.13 -&gt; 1.0.14) [CRAN]
+ 8: glue       (1.7.0  -&gt; 1.8.0 ) [CRAN]
+ 9: cli        (3.6.3  -&gt; 3.6.4 ) [CRAN]
+10: rstudioapi (0.16.0 -&gt; 0.17.1) [CRAN]
+11: R6         (2.5.1  -&gt; 2.6.1 ) [CRAN]
+12: ps         (1.8.0  -&gt; 1.9.0 ) [CRAN]
+13: processx   (3.8.4  -&gt; 3.8.6 ) [CRAN]</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW5zdGFsbC5wYWNrYWdlcyhcImRldnRvb2xzXCIpXG5cbmBgYCJ9 -->
+<pre class="r"><code>install.packages(&quot;devtools&quot;)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoi4pSA4pSAIFIgQ01EIGJ1aWxkIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuICBcbiAgXG4gIFxu4pyUICBjaGVja2luZyBmb3IgZmlsZSAnQzpcXFVzZXJzXFxEdWNEb1xcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXFJ0bXBVaEhZa2ZcXHJlbW90ZXMxOTk0M2QwNjQ1ZGJcXHJzdHVkaW8tdGVuc29yZmxvdy1jMDkwZjg0L0RFU0NSSVBUSU9OJyAoMzc5bXMpXG5cbiAgXG4gIFxuICBcbuKUgCAgcHJlcGFyaW5nICd0ZW5zb3JmbG93JzogKDEuNHMpXG4gICBjaGVja2luZyBERVNDUklQVElPTiBtZXRhLWluZm9ybWF0aW9uIC4uLlxuICBcbuKclCAgY2hlY2tpbmcgREVTQ1JJUFRJT04gbWV0YS1pbmZvcm1hdGlvblxuXG4gIFxuICBcbiAgXG7ilIAgIGNoZWNraW5nIGZvciBMRiBsaW5lLWVuZGluZ3MgaW4gc291cmNlIGFuZCBtYWtlIGZpbGVzIGFuZCBzaGVsbCBzY3JpcHRzICgzMzhtcylcblxuICBcbuKUgCAgY2hlY2tpbmcgZm9yIGVtcHR5IG9yIHVubmVlZGVkIGRpcmVjdG9yaWVzXG7ilIAgIGJ1aWxkaW5nICd0ZW5zb3JmbG93XzIuMTYuMC45MDAwLnRhci5neidcbiAgIFxuIn0= -->
+<pre><code>── R CMD build ─────────────────────────────────────────────────────────────────────────────────────
+  
+  
+  
+✔  checking for file &#39;C:\Users\DucDo\AppData\Local\Temp\RtmpUhHYkf\remotes19943d0645db\rstudio-tensorflow-c090f84/DESCRIPTION&#39; (379ms)
+
+  
+  
+  
+─  preparing &#39;tensorflow&#39;: (1.4s)
+   checking DESCRIPTION meta-information ...
+  
+✔  checking DESCRIPTION meta-information
+
+  
+  
+  
+─  checking for LF line-endings in source and make files and shell scripts (338ms)
+
+  
+─  checking for empty or unneeded directories
+─  building &#39;tensorflow_2.16.0.9000.tar.gz&#39;
+   </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiSW5zdGFsbGluZyBwYWNrYWdlIGludG8g4oCYQzovVXNlcnMvRHVjRG8vQXBwRGF0YS9Mb2NhbC9SL3dpbi1saWJyYXJ5LzQuNOKAmVxuKGFzIOKAmGxpYuKAmSBpcyB1bnNwZWNpZmllZClcbiJ9 -->
+<pre><code>Installing package into ‘C:/Users/DucDo/AppData/Local/R/win-library/4.4’
+(as ‘lib’ is unspecified)</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiKiBpbnN0YWxsaW5nICpzb3VyY2UqIHBhY2thZ2UgJ3RlbnNvcmZsb3cnIC4uLlxuKiogdXNpbmcgc3RhZ2VkIGluc3RhbGxhdGlvblxuKiogUlxuKiogYnl0ZS1jb21waWxlIGFuZCBwcmVwYXJlIHBhY2thZ2UgZm9yIGxhenkgbG9hZGluZ1xuKiogaGVscFxuKioqIGluc3RhbGxpbmcgaGVscCBpbmRpY2VzXG4qKiogY29weWluZyBmaWd1cmVzXG4qKiBidWlsZGluZyBwYWNrYWdlIGluZGljZXNcbioqIHRlc3RpbmcgaWYgaW5zdGFsbGVkIHBhY2thZ2UgY2FuIGJlIGxvYWRlZCBmcm9tIHRlbXBvcmFyeSBsb2NhdGlvblxuKiogdGVzdGluZyBpZiBpbnN0YWxsZWQgcGFja2FnZSBjYW4gYmUgbG9hZGVkIGZyb20gZmluYWwgbG9jYXRpb25cbioqIHRlc3RpbmcgaWYgaW5zdGFsbGVkIHBhY2thZ2Uga2VlcHMgYSByZWNvcmQgb2YgdGVtcG9yYXJ5IGluc3RhbGxhdGlvbiBwYXRoXG4qIERPTkUgKHRlbnNvcmZsb3cpXG4ifQ== -->
+<pre><code>* installing *source* package &#39;tensorflow&#39; ...
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (tensorflow)</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBpbnN0YWxsIHJldGljdWxhdGU6XG5pbnN0YWxsLnBhY2thZ2VzKFwicmV0aWN1bGF0ZVwiKVxuYGBgIn0= -->
+<pre class="r"><code># install reticulate:
+install.packages(&quot;reticulate&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiV0FSTklORzogUnRvb2xzIGlzIHJlcXVpcmVkIHRvIGJ1aWxkIFIgcGFja2FnZXMgYnV0IGlzIG5vdCBjdXJyZW50bHkgaW5zdGFsbGVkLiBQbGVhc2UgZG93bmxvYWQgYW5kIGluc3RhbGwgdGhlIGFwcHJvcHJpYXRlIHZlcnNpb24gb2YgUnRvb2xzIGJlZm9yZSBwcm9jZWVkaW5nOlxuXG5odHRwczovL2NyYW4ucnN0dWRpby5jb20vYmluL3dpbmRvd3MvUnRvb2xzL1xuSW5zdGFsbGluZyBwYWNrYWdlIGludG8g4oCYQzovVXNlcnMvRHVjRG8vQXBwRGF0YS9Mb2NhbC9SL3dpbi1saWJyYXJ5LzQuNOKAmVxuKGFzIOKAmGxpYuKAmSBpcyB1bnNwZWNpZmllZClcbnRyeWluZyBVUkwgJ2h0dHBzOi8vY3Jhbi5yc3R1ZGlvLmNvbS9iaW4vd2luZG93cy9jb250cmliLzQuNC9yZXRpY3VsYXRlXzEuNDEuMC4xLnppcCdcbkNvbnRlbnQgdHlwZSAnYXBwbGljYXRpb24vemlwJyBsZW5ndGggMjI2NjA2NyBieXRlcyAoMi4yIE1CKVxuZG93bmxvYWRlZCAyLjIgTUJcbiJ9 -->
+<pre><code>WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+
+https://cran.rstudio.com/bin/windows/Rtools/
+Installing package into ‘C:/Users/DucDo/AppData/Local/R/win-library/4.4’
+(as ‘lib’ is unspecified)
+trying URL &#39;https://cran.rstudio.com/bin/windows/contrib/4.4/reticulate_1.41.0.1.zip&#39;
+Content type &#39;application/zip&#39; length 2266067 bytes (2.2 MB)
+downloaded 2.2 MB</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSDigJhyZXRpY3VsYXRl4oCZIHN1Y2Nlc3NmdWxseSB1bnBhY2tlZCBhbmQgTUQ1IHN1bXMgY2hlY2tlZFxuV2FybmluZyBpbiBpbnN0YWxsLnBhY2thZ2VzIDpcbiAgY2Fubm90IHJlbW92ZSBwcmlvciBpbnN0YWxsYXRpb24gb2YgcGFja2FnZSDigJhyZXRpY3VsYXRl4oCZXG5XYXJuaW5nIGluIGluc3RhbGwucGFja2FnZXMgOlxuICBwcm9ibGVtIGNvcHlpbmcgQzpcXFVzZXJzXFxEdWNEb1xcQXBwRGF0YVxcTG9jYWxcXFJcXHdpbi1saWJyYXJ5XFw0LjRcXDAwTE9DS1xccmV0aWN1bGF0ZVxcbGlic1xceDY0XFxyZXRpY3VsYXRlLmRsbCB0byBDOlxcVXNlcnNcXER1Y0RvXFxBcHBEYXRhXFxMb2NhbFxcUlxcd2luLWxpYnJhcnlcXDQuNFxccmV0aWN1bGF0ZVxcbGlic1xceDY0XFxyZXRpY3VsYXRlLmRsbDogUGVybWlzc2lvbiBkZW5pZWRcbldhcm5pbmcgaW4gaW5zdGFsbC5wYWNrYWdlcyA6XG4gIHJlc3RvcmVkIOKAmHJldGljdWxhdGXigJlcblxuVGhlIGRvd25sb2FkZWQgYmluYXJ5IHBhY2thZ2VzIGFyZSBpblxuXHRDOlxcVXNlcnNcXER1Y0RvXFxBcHBEYXRhXFxMb2NhbFxcVGVtcFxcUnRtcFVoSFlrZlxcZG93bmxvYWRlZF9wYWNrYWdlc1xuIn0= -->
+<pre><code>package ‘reticulate’ successfully unpacked and MD5 sums checked
+Warning in install.packages :
+  cannot remove prior installation of package ‘reticulate’
+Warning in install.packages :
+  problem copying C:\Users\DucDo\AppData\Local\R\win-library\4.4\00LOCK\reticulate\libs\x64\reticulate.dll to C:\Users\DucDo\AppData\Local\R\win-library\4.4\reticulate\libs\x64\reticulate.dll: Permission denied
+Warning in install.packages :
+  restored ‘reticulate’
+
+The downloaded binary packages are in
+    C:\Users\DucDo\AppData\Local\Temp\RtmpUhHYkf\downloaded_packages</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShyZXRpY3VsYXRlKVxuXG51c2VfY29uZGFlbnYoXCJiYXNlXCIpXG5gYGAifQ== -->
+<pre class="r"><code>library(reticulate)
+
+use_condaenv(&quot;base&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IFVuYWJsZSB0byBmaW5kIGNvbmRhIGJpbmFyeS4gSXMgQW5hY29uZGEgaW5zdGFsbGVkP1xuIn0= -->
+<pre><code>Error: Unable to find conda binary. Is Anaconda installed?</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBFeGFtcGxlOiBMb2FkIGRhdGFzZXQgKGFkanVzdCBiYXNlZCBvbiB5b3VyIGFjdHVhbCBkYXRhIHNvdXJjZSlcbmRmIDwtIHJlYWQuY3N2KFwiLi4vZm9ybWF0ZWRfZGF0YS5jc3ZcIilcbmhlYWQoZGYpXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBFeGFtcGxlOiBMb2FkIGRhdGFzZXQgKGFkanVzdCBiYXNlZCBvbiB5b3VyIGFjdHVhbCBkYXRhIHNvdXJjZSlcbmRmIDwtIHJlYWQuY3N2KFwiLi4vZm9ybWF0ZWRfZGF0YS5jc3ZcIilcbmhlYWQoZGYpXG5cbmBgYCJ9 -->
 <pre class="r"><code># Example: Load dataset (adjust based on your actual data source)
 df &lt;- read.csv(&quot;../formated_data.csv&quot;)
-head(df)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImRhdGEuZnJhbWUiXSwibnJvdyI6NiwibmNvbCI6MTUsInN1bW1hcnkiOnsiRGVzY3JpcHRpb24iOlsiZGYgWzYgw5cgMTVdIl19fSwicmRmIjoiSDRzSUFBQUFBQUFBQnJXVXpXc1RRUmpHSjhudXRsMmJSbXhSRUFxU1F3UTF3MmEzMXZRZ0cwbXdnWktreENnVlBYU2JwRFdZYnRKa3E2RVhCZjhIUVJFdm9oNzhBTkY2MGFNSVFyM29xV2NWbTRzZTlLQ1g2ck83TThsbVBUdjB4L3N4N3pNZjcwNWF6Q3hvOG9KTUNBa1JRUWlSa0FpWGlHZExwK05KUW9RZ2dnQVJ5SWh0T3lnYWh4TUJlNEhFSm1SVlVhYmlpaFpQS1A4eE03am5jQ0pKRlFWL3ZYaG1NRllWWDV6d3hhb3YxbGhNeUppOVQwcllzc2Y3RkhGSEtuRExIcmU1MVg4eiswTnpCa3JDenZtSU9BOUd3UVpZUkJOL2dTZjllWElUTk1FQ1FDMnh0Ykhldm9mWnZsRnUyZjdSWldla0RySjRuenZmWDFmWWorL3pDandDTDBDR2tPQTN6NzRQd0FxNEFSNHplOTZqUHdSd05zRUMwQXFiT1ArTVI3OEdMb0lXd04wSTZzaGlmMTY2QXc0QXZCRUpmUlEvZ0RYUCtqOXhwaTFZRlR3SDV4QnY5dTU5MU8xajZnanJNKzlEak4wM3h1N1BiRStYYmJ1NjJXMVhOOGZxODh6bTJEbzVkMTJ1MDNmMEwrOG1KejdyWDAvTXZYMzQvYTYrRTdobjBtZHY5TzZ4K3h1ZGVsVHZudHkrdHZUeXFkNmRuUGowK3VNRjM0OUJOSTNWYXBzOXlnaExDaG5EcW5LL1ZGdmx2cFF1ME5rU1pkR2UrWktTcEdjU0ZGbisrdks1Yk5wVE1weWV6azU3NHJBclVhbFR4NUpEK1VMSFV6UHExbWpVVHZkTDFIOUxwcWlkSGp6TmNWclFlQ3BRWWs2d21PWGVxYXl2QVNPdHhsWEttMkIvNGVCMXQrR1N2MVBsdXRIbW5lSkp1V0pZQmwxdVFZOW8xeWNaYWpTdFdzT0VLRGpPM3A1WEhDajZFcEYxMHo1SkpWNit0RzVlamlkODA2R21hVDk3MlVtNWhKbVZQSDdFUFVYd0R4bjhWeU5WelpXYXliK2xXRGVXcW5XK2NxVjZoYmxqNklmVER0cHMxVXlMM3hQWk5yVWFsc0VsY3JsUjV4bm41bVQzTHdWZTNGV0VCUUFBIn0= -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Date"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Time"],"name":[2],"type":["chr"],"align":["left"]},{"label":["CO.GT."],"name":[3],"type":["dbl"],"align":["right"]},{"label":["PT08.S1.CO."],"name":[4],"type":["int"],"align":["right"]},{"label":["NMHC.GT."],"name":[5],"type":["int"],"align":["right"]},{"label":["C6H6.GT."],"name":[6],"type":["dbl"],"align":["right"]},{"label":["PT08.S2.NMHC."],"name":[7],"type":["int"],"align":["right"]},{"label":["NOx.GT."],"name":[8],"type":["int"],"align":["right"]},{"label":["PT08.S3.NOx."],"name":[9],"type":["int"],"align":["right"]},{"label":["NO2.GT."],"name":[10],"type":["int"],"align":["right"]},{"label":["PT08.S4.NO2."],"name":[11],"type":["int"],"align":["right"]},{"label":["PT08.S5.O3."],"name":[12],"type":["int"],"align":["right"]},{"label":["T"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["RH"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["AH"],"name":[15],"type":["dbl"],"align":["right"]}],"data":[{"1":"2004-03-10","2":"18.00.00","3":"2.6","4":"1360","5":"150","6":"11.9","7":"1046","8":"166","9":"1056","10":"113","11":"1692","12":"1268","13":"13.6","14":"48.9","15":"0.7578","_rn_":"1"},{"1":"2004-03-10","2":"19.00.00","3":"2.0","4":"1292","5":"112","6":"9.4","7":"955","8":"103","9":"1174","10":"92","11":"1559","12":"972","13":"13.3","14":"47.7","15":"0.7255","_rn_":"2"},{"1":"2004-03-10","2":"20.00.00","3":"2.2","4":"1402","5":"88","6":"9.0","7":"939","8":"131","9":"1140","10":"114","11":"1555","12":"1074","13":"11.9","14":"54.0","15":"0.7502","_rn_":"3"},{"1":"2004-03-10","2":"21.00.00","3":"2.2","4":"1376","5":"80","6":"9.2","7":"948","8":"172","9":"1092","10":"122","11":"1584","12":"1203","13":"11.0","14":"60.0","15":"0.7867","_rn_":"4"},{"1":"2004-03-10","2":"22.00.00","3":"1.6","4":"1272","5":"51","6":"6.5","7":"836","8":"131","9":"1205","10":"116","11":"1490","12":"1110","13":"11.2","14":"59.6","15":"0.7888","_rn_":"5"},{"1":"2004-03-10","2":"23.00.00","3":"1.2","4":"1197","5":"38","6":"4.7","7":"750","8":"89","9":"1337","10":"96","11":"1393","12":"949","13":"11.2","14":"59.2","15":"0.7848","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10],"total":[15]},"rows":{"min":[10],"max":[10],"total":[6]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTkFcbmBgYCJ9 -->
-<pre class="r"><code>NA</code></pre>
+head(df)
+</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -1827,8 +1932,78 @@ X &lt;- as.matrix(predictors)
 Y &lt;- as.matrix(targets)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0LnNlZWQoMTIzKSAgIyBGb3IgcmVwcm9kdWNpYmlsaXR5XG50cmFpbl9pbmRleCA8LSBzYW1wbGUoMTpucm93KFgpLCBzaXplID0gMC44ICogbnJvdyhYKSkgICMgODAlIHRyYWluLCAyMCUgdGVzdFxuXG5YX3RyYWluIDwtIFhbdHJhaW5faW5kZXgsIF1cbllfdHJhaW4gPC0gWVt0cmFpbl9pbmRleCwgXVxuXG5YX3Rlc3QgPC0gWFstdHJhaW5faW5kZXgsIF1cbllfdGVzdCA8LSBZWy10cmFpbl9pbmRleCwgXVxuXG5gYGAifQ== -->
+<pre class="r"><code>set.seed(123)  # For reproducibility
+train_index &lt;- sample(1:nrow(X), size = 0.8 * nrow(X))  # 80% train, 20% test
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpgYGB7cn0NCiMgUiB2ZXJzaW9uOiA0LjQuMw0KDQppZiAoIXJlcXVpcmUoInRpZHl2ZXJzZSIpKSB7DQogICAgaW5zdGFsbC5wYWNrYWdlcygidGlkeXZlcnNlIikNCn0NCg0KaWYgKCFyZXF1aXJlKCJrZXJhcyIpKSB7DQogICAgaW5zdGFsbC5wYWNrYWdlcygia2VyYXMiKQ0KfQ0KDQpsaWJyYXJ5KCJrZXJhcyIpDQpsaWJyYXJ5KCJ0aWR5dmVyc2UiKQ0KYGBgDQoNCmBgYHtSfQ0KIyBFeGFtcGxlOiBMb2FkIGRhdGFzZXQgKGFkanVzdCBiYXNlZCBvbiB5b3VyIGFjdHVhbCBkYXRhIHNvdXJjZSkNCmRmIDwtIHJlYWQuY3N2KCIuLi9mb3JtYXRlZF9kYXRhLmNzdiIpDQpoZWFkKGRmKQ0KDQpgYGANCg0KYGBge1J9DQojIERlZmluZSBwcmVkaWN0b3JzIChleGNsdWRlIERhdGUsIFRpbWUsIGFuZCB0YXJnZXRzKQ0KcHJlZGljdG9ycyA8LSBkZiAlPiUgc2VsZWN0KC1jKERhdGUsIFRpbWUsIENPLkdULiwgQzZINi5HVC4sIE5PeC5HVC4sIE5PMi5HVC4pKQ0KDQojIERlZmluZSBtdWx0aXBsZSB0YXJnZXQgdmFyaWFibGVzIChDTywgTk94LCBCZW56ZW5lKQ0KdGFyZ2V0cyA8LSBkZiAlPiUgc2VsZWN0KENPLkdULiwgQzZINi5HVC4sIE5PeC5HVC4sIE5PMi5HVC4pDQoNCiMgTm9ybWFsaXplIGRhdGEgKG9wdGlvbmFsIGJ1dCByZWNvbW1lbmRlZCkNCg0Kbm9ybWFsaXplIDwtIGZ1bmN0aW9uKHgpIHsgDQogICh4IC0gbWluKHgpKSAvIChtYXgoeCkgLSBtaW4oeCkpIA0KfQ0KDQpwcmVkaWN0b3JzIDwtIGFzLmRhdGEuZnJhbWUobGFwcGx5KHByZWRpY3RvcnMsIG5vcm1hbGl6ZSkpDQp0YXJnZXRzIDwtIGFzLmRhdGEuZnJhbWUobGFwcGx5KHRhcmdldHMsIG5vcm1hbGl6ZSkpDQoNCiMgQ29udmVydCB0byBtYXRyaWNlcyBmb3IgS2VyYXMNClggPC0gYXMubWF0cml4KHByZWRpY3RvcnMpDQpZIDwtIGFzLm1hdHJpeCh0YXJnZXRzKQ0KYGBg</div>
+X_train &lt;- X[train_index, ]
+Y_train &lt;- Y[train_index, ]
+
+X_test &lt;- X[-train_index, ]
+Y_test &lt;- Y[-train_index, ]
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShrZXJhcylcblxuIyBEZWZpbmUgdGhlIGlucHV0IHNoYXBlIGFzIGEgdHVwbGUgKG5jb2woWCksKVxubW9kZWwgPC0ga2VyYXNfbW9kZWxfc2VxdWVudGlhbCgpICU+JVxuICBsYXllcl9kZW5zZSh1bml0cyA9IDMyLCBhY3RpdmF0aW9uID0gXCJyZWx1XCIsIGlucHV0X3NoYXBlID0gYyhuY29sKFgpKSkgJT4lXG4gIGxheWVyX2RlbnNlKHVuaXRzID0gMTYsIGFjdGl2YXRpb24gPSBcInJlbHVcIikgJT4lXG4gIGxheWVyX2RlbnNlKHVuaXRzID0gbmNvbChZKSkgICMgTXVsdGlwbGUgb3V0cHV0IG5vZGVzIChvbmUgcGVyIHRhcmdldCB2YXJpYWJsZSlcblxuIyBDb21waWxlIHRoZSBtb2RlbFxubW9kZWwgJT4lIGNvbXBpbGUoXG4gIGxvc3MgPSBcIm1zZVwiLCAgIyBNZWFuIFNxdWFyZWQgRXJyb3IgZm9yIHJlZ3Jlc3Npb25cbiAgb3B0aW1pemVyID0gb3B0aW1pemVyX2FkYW0oKSxcbiAgbWV0cmljcyA9IGxpc3QoXCJtYWVcIikgICMgTWVhbiBBYnNvbHV0ZSBFcnJvclxuKVxuXG5saWJyYXJ5KGtlcmFzKVxuaW5zdGFsbF9rZXJhcygpXG5cbmBgYCJ9 -->
+<pre class="r"><code>library(keras)
+
+# Define the input shape as a tuple (ncol(X),)
+model &lt;- keras_model_sequential() %&gt;%
+  layer_dense(units = 32, activation = &quot;relu&quot;, input_shape = c(ncol(X))) %&gt;%
+  layer_dense(units = 16, activation = &quot;relu&quot;) %&gt;%
+  layer_dense(units = ncol(Y))  # Multiple output nodes (one per target variable)
+
+# Compile the model
+model %&gt;% compile(
+  loss = &quot;mse&quot;,  # Mean Squared Error for regression
+  optimizer = optimizer_adam(),
+  metrics = list(&quot;mae&quot;)  # Mean Absolute Error
+)
+
+library(keras)
+install_keras()
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaGlzdG9yeSA8LSBtb2RlbCAlPiUgZml0KFxuICBYX3RyYWluLCBZX3RyYWluLFxuICBlcG9jaHMgPSAxMDAsIGJhdGNoX3NpemUgPSAzMixcbiAgdmFsaWRhdGlvbl9zcGxpdCA9IDAuMixcbiAgdmVyYm9zZSA9IDFcbilcblxuaW5zdGFsbF90ZW5zb3JmbG93KClcbmBgYCJ9 -->
+<pre class="r"><code>history &lt;- model %&gt;% fit(
+  X_train, Y_train,
+  epochs = 100, batch_size = 32,
+  validation_split = 0.2,
+  verbose = 1
+)
+
+install_tensorflow()</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubW9kZWwgJT4lIGV2YWx1YXRlKFhfdGVzdCwgWV90ZXN0KVxuXG5gYGAifQ== -->
+<pre class="r"><code>model %&gt;% evaluate(X_test, Y_test)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucHJlZGljdGlvbnMgPC0gbW9kZWwgJT4lIHByZWRpY3QoWF90ZXN0KVxucHJpbnQocHJlZGljdGlvbnNbMTo1LCBdKSAgIyBTaG93IGZpcnN0IDUgcHJlZGljdGlvbnNcblxuYGBgIn0= -->
+<pre class="r"><code>predictions &lt;- model %&gt;% predict(X_test)
+print(predictions[1:5, ])  # Show first 5 predictions
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpgYGB7cn0NCiMgUiB2ZXJzaW9uOiA0LjQuMw0KDQppZiAoIXJlcXVpcmUoInRpZHl2ZXJzZSIpKSB7DQogICAgaW5zdGFsbC5wYWNrYWdlcygidGlkeXZlcnNlIikNCn0NCg0KaWYgKCFyZXF1aXJlKCJrZXJhcyIpKSB7DQogICAgaW5zdGFsbC5wYWNrYWdlcygia2VyYXMiKQ0KfQ0KDQpsaWJyYXJ5KCJrZXJhcyIpDQojIGluc3RhbGxfa2VyYXMoKQ0KaW5zdGFsbF9rZXJhcyh0ZW5zb3JmbG93ID0gImxhdGVzdCIpDQoNCmxpYnJhcnkoInRpZHl2ZXJzZSIpDQpgYGANCmBgYHtSfQ0KIyBJbnN0YWxsIGRldnRvb2xzDQppbnN0YWxsLnBhY2thZ2VzKCJkZXZ0b29scyIpDQoNCiMgSW5zdGFsbCB0ZW5zb3JmbG93Og0KZGV2dG9vbHM6Omluc3RhbGxfZ2l0aHViKCJyc3R1ZGlvL3RlbnNvcmZsb3ciKQ0KDQojIGluc3RhbGwgcmV0aWN1bGF0ZToNCmluc3RhbGwucGFja2FnZXMoInJldGljdWxhdGUiKQ0KDQpsaWJyYXJ5KHJldGljdWxhdGUpDQoNClN5cy5zZXRlbnYoUEFUSCA9IHBhc3RlKCJDOi9Vc2Vycy9EdWNEby9BbmFjb25kYTMvU2NyaXB0cyIsIFN5cy5nZXRlbnYoIlBBVEgiKSwgc2VwPSI7IikpDQoNCnVzZV9jb25kYWVudigiYmFzZSIpDQoNCiMgdXNlX2NvbmRhZW52KCJDOi9Vc2Vycy9EdWNEby9BbmFjb25kYTMvZW52cy9iYXNlIikNCg0KIyBQeXRob24gdmVyc2lvbg0KIyB1c2VfcHl0aG9uKCJDOi9Vc2Vycy9EdWNEby9BbmFjb25kYTMvcHl0aG9uLmV4ZSIpDQoNCiMgUHl0aG9uIGVudmlyb25tZW50Og0KIyB1c2VfdmlydHVhbGVudigibXllbnYiKQ0KDQpsaWJyYXJ5KHRlbnNvcmZsb3cpDQoNCiMgSW5zdGFsbCB0ZW5zb3JmbG93DQppbnN0YWxsX3RlbnNvcmZsb3coKQ0KDQp0ZiRwcmludCgNCiAgdGYkY29uc3RhbnQoJ0hlbGxvLCBUZW5zb3JGbG93IScpDQogICkNCmBgYA0KDQpgYGB7Un0NCiMgRXhhbXBsZTogTG9hZCBkYXRhc2V0IChhZGp1c3QgYmFzZWQgb24geW91ciBhY3R1YWwgZGF0YSBzb3VyY2UpDQpkZiA8LSByZWFkLmNzdigiLi4vZm9ybWF0ZWRfZGF0YS5jc3YiKQ0KaGVhZChkZikNCg0KYGBgDQoNCmBgYHtSfQ0KIyBEZWZpbmUgcHJlZGljdG9ycyAoZXhjbHVkZSBEYXRlLCBUaW1lLCBhbmQgdGFyZ2V0cykNCnByZWRpY3RvcnMgPC0gZGYgJT4lIHNlbGVjdCgtYyhEYXRlLCBUaW1lLCBDTy5HVC4sIEM2SDYuR1QuLCBOT3guR1QuLCBOTzIuR1QuKSkNCg0KIyBEZWZpbmUgbXVsdGlwbGUgdGFyZ2V0IHZhcmlhYmxlcyAoQ08sIE5PeCwgQmVuemVuZSkNCnRhcmdldHMgPC0gZGYgJT4lIHNlbGVjdChDTy5HVC4sIEM2SDYuR1QuLCBOT3guR1QuLCBOTzIuR1QuKQ0KDQojIE5vcm1hbGl6ZSBkYXRhIChvcHRpb25hbCBidXQgcmVjb21tZW5kZWQpDQoNCm5vcm1hbGl6ZSA8LSBmdW5jdGlvbih4KSB7IA0KICAoeCAtIG1pbih4KSkgLyAobWF4KHgpIC0gbWluKHgpKSANCn0NCg0KcHJlZGljdG9ycyA8LSBhcy5kYXRhLmZyYW1lKGxhcHBseShwcmVkaWN0b3JzLCBub3JtYWxpemUpKQ0KdGFyZ2V0cyA8LSBhcy5kYXRhLmZyYW1lKGxhcHBseSh0YXJnZXRzLCBub3JtYWxpemUpKQ0KDQojIENvbnZlcnQgdG8gbWF0cmljZXMgZm9yIEtlcmFzDQpYIDwtIGFzLm1hdHJpeChwcmVkaWN0b3JzKQ0KWSA8LSBhcy5tYXRyaXgodGFyZ2V0cykNCmBgYA0KDQpgYGB7Un0NCnNldC5zZWVkKDEyMykgICMgRm9yIHJlcHJvZHVjaWJpbGl0eQ0KdHJhaW5faW5kZXggPC0gc2FtcGxlKDE6bnJvdyhYKSwgc2l6ZSA9IDAuOCAqIG5yb3coWCkpICAjIDgwJSB0cmFpbiwgMjAlIHRlc3QNCg0KWF90cmFpbiA8LSBYW3RyYWluX2luZGV4LCBdDQpZX3RyYWluIDwtIFlbdHJhaW5faW5kZXgsIF0NCg0KWF90ZXN0IDwtIFhbLXRyYWluX2luZGV4LCBdDQpZX3Rlc3QgPC0gWVstdHJhaW5faW5kZXgsIF0NCg0KYGBgDQoNCmBgYHtSfQ0KbGlicmFyeShrZXJhcykNCg0KIyBEZWZpbmUgdGhlIGlucHV0IHNoYXBlIGFzIGEgdHVwbGUgKG5jb2woWCksKQ0KbW9kZWwgPC0ga2VyYXNfbW9kZWxfc2VxdWVudGlhbCgpICU+JQ0KICBsYXllcl9kZW5zZSh1bml0cyA9IDMyLCBhY3RpdmF0aW9uID0gInJlbHUiLCBpbnB1dF9zaGFwZSA9IGMobmNvbChYKSkpICU+JQ0KICBsYXllcl9kZW5zZSh1bml0cyA9IDE2LCBhY3RpdmF0aW9uID0gInJlbHUiKSAlPiUNCiAgbGF5ZXJfZGVuc2UodW5pdHMgPSBuY29sKFkpKSAgIyBNdWx0aXBsZSBvdXRwdXQgbm9kZXMgKG9uZSBwZXIgdGFyZ2V0IHZhcmlhYmxlKQ0KDQojIENvbXBpbGUgdGhlIG1vZGVsDQptb2RlbCAlPiUgY29tcGlsZSgNCiAgbG9zcyA9ICJtc2UiLCAgIyBNZWFuIFNxdWFyZWQgRXJyb3IgZm9yIHJlZ3Jlc3Npb24NCiAgb3B0aW1pemVyID0gb3B0aW1pemVyX2FkYW0oKSwNCiAgbWV0cmljcyA9IGxpc3QoIm1hZSIpICAjIE1lYW4gQWJzb2x1dGUgRXJyb3INCikNCg0KbGlicmFyeShrZXJhcykNCmluc3RhbGxfa2VyYXMoKQ0KDQpgYGANCg0KYGBge1J9DQpoaXN0b3J5IDwtIG1vZGVsICU+JSBmaXQoDQogIFhfdHJhaW4sIFlfdHJhaW4sDQogIGVwb2NocyA9IDEwMCwgYmF0Y2hfc2l6ZSA9IDMyLA0KICB2YWxpZGF0aW9uX3NwbGl0ID0gMC4yLA0KICB2ZXJib3NlID0gMQ0KKQ0KDQppbnN0YWxsX3RlbnNvcmZsb3coKQ0KYGBgDQoNCg0KYGBge1J9DQptb2RlbCAlPiUgZXZhbHVhdGUoWF90ZXN0LCBZX3Rlc3QpDQoNCmBgYA0KDQpgYGB7Un0NCnByZWRpY3Rpb25zIDwtIG1vZGVsICU+JSBwcmVkaWN0KFhfdGVzdCkNCnByaW50KHByZWRpY3Rpb25zWzE6NSwgXSkgICMgU2hvdyBmaXJzdCA1IHByZWRpY3Rpb25zDQoNCmBgYA0K</div>
 
 
 
