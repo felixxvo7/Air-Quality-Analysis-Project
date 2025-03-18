@@ -8,7 +8,7 @@ output:
 
 ## 1. Peroxyacetyl Nitrate (PAN) Approximation
 
-### Formula (Using Polynomial Regression for C6H6):
+### Formula (Using **Polynomial Regression** for C6H6):
 
 $$
 PAN_{proxy} = a \times NOx + b \times C6H6 + c \times C6H6^2 + d \times O_3 + e \times T
@@ -16,7 +16,7 @@ $$ Where:
 
 \- **NOx (NO + NO₂)** → Major precursor for PAN.
 
- - **C6H6 (Benzene)** → A proxy for VOCs that contribute to PAN formation.
+-   **C6H6 (Benzene)** → A proxy for VOCs that contribute to PAN formation.
 
 \- **C6H6² (Quadratic Term)** → Captures nonlinear VOC effects.
 
