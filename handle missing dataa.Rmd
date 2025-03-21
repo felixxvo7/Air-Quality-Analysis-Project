@@ -48,7 +48,7 @@ df <- df %>% select(-NMHC.GT.)
 
 Time series data:
     - Forward Fill
-    - Barckward Fill
+    - Backward Fill
     - Interpolation
 
 
