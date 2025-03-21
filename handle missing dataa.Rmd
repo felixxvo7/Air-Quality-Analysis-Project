@@ -1,0 +1,99 @@
+---
+title: "Untitled"
+author: "Felix Vo"
+date: "2025-03-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Air quality
+
+#### The dataset
+
+```{r}
+library(VIM)
+library(dplyr)
+library(zoo)
+
+df <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/formated_data.csv")
+data <- df
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+# Replace -200 with 0
+df[df == -200] <- 0
+summary(df)
+```
+
+
+```{r}
+medians <- apply(df,2,median,na.rm = TRUE)
+medians
+
+# Remove NMHC.GT. column
+df <- df %>% select(-NMHC.GT.)
+
+```
+**NMHC_GT median value is 0, that's make posibble if NMHC_GT value contains many 0 values**
+
+
+### Missing Value IS NOT at Random
+
+Time series data:
+    - Forward Fill
+    - Barckward Fill
+    - Interpolation
+
+
+```{r}
+sensor_cols <- c("CO.GT.", "PT08.S1.CO.", "PT08.S2.NMHC.", "NOx.GT.", 
+                 "PT08.S3.NOx.", "NO2.GT.", "PT08.S4.NO2.", "PT08.S5.O3.")
+
+data <- data %>% select(-NMHC.GT.)
+data[data == -200] <- NA
+
+#Apply KNN Imputation for correlated sensor variables
+sensor_cols <- c("CO.GT.", "PT08.S1.CO.", "PT08.S2.NMHC.", "NOx.GT.", 
+                 "PT08.S3.NOx.", "NO2.GT.", "PT08.S4.NO2.", "PT08.S5.O3.")
+
+data_knn <- kNN(data, variable = sensor_cols, k = 5)
+data_knn <- data_knn[, 1:ncol(data)]
+
+#Handle time-series columns (T, RH, AH) using forward fill, backward fill, and interpolation
+data_knn <- data_knn %>%
+  mutate(
+    T = na.locf(T, na.rm = FALSE),  # Forward Fill (LOCF)
+    T = na.locf(T, fromLast = TRUE, na.rm = FALSE),  # Backward Fill (NOCB)
+    T = na.approx(T, na.rm = FALSE),  # Interpolation
+
+    RH = na.locf(RH, na.rm = FALSE),
+    RH = na.locf(RH, fromLast = TRUE, na.rm = FALSE),
+    RH = na.approx(RH, na.rm = FALSE),
+
+    AH = na.locf(AH, na.rm = FALSE),
+    AH = na.locf(AH, fromLast = TRUE, na.rm = FALSE),
+    AH = na.approx(AH, na.rm = FALSE)
+  )
+
+data_knn[is.na(data_knn)] <- 0
+
+write.csv(data_knn, "final_cleaned_data.csv", row.names = FALSE)
+summary(data_knn)
+```
+```{r}
+library(ggcorrplot)
+# Compute the correlation matrix
+data_numeric <- data %>% select(-Date, -Time)
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+write.csv(cor_matrix, "cor_matrix.csv")
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+```
+
