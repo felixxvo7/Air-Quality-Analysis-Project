@@ -1,0 +1,160 @@
+---
+title: "models2"
+author: "Duc Do"
+date: "2025-03-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R}
+# Install devtools
+if (!require("devtools")) {
+  install.packages("devtools")
+}
+
+# Install tensorflow:
+# devtools::install_github("rstudio/tensorflow")
+
+if (!require(tensorflow)) {
+  install.packages("tensorflow")
+}
+
+# install reticulate:
+if (!require("reticulate")) {
+  install.packages("reticulate")
+}
+
+library(reticulate)
+
+Sys.setenv(PATH = paste("C:/Users/DucDo/Anaconda3/Scripts", Sys.getenv("PATH"), sep=";"))
+
+use_condaenv("base")
+
+# use_condaenv("C:/Users/DucDo/Anaconda3/envs/base")
+
+# Python version
+# use_python("C:/Users/DucDo/Anaconda3/python.exe")
+
+# Python environment:
+# use_virtualenv("myenv")
+
+# Install tensorflow
+library(tensorflow)
+
+# Check if TensorFlow is available
+if (!tensorflow::tf$executing_eagerly()) {
+  message("TensorFlow not found. Installing now...")
+  install_tensorflow()
+}
+
+tf$print(
+  tf$constant('Hello, TensorFlow!')
+  )
+
+if (!require("tidyverse")) {
+    install.packages("tidyverse")
+}
+
+if (!require("keras")) {
+    install.packages("keras")
+}
+
+library("tidyverse")
+library("keras")
+```
+
+
+```{R}
+library(keras)
+
+# Define the input shape as a tuple (ncol(X),)
+model = keras_model_sequential() %>%
+  layer_dense(units = 32, activation = "relu", input_shape = c(9)) %>%
+  layer_dense(units = 16, activation = "relu") %>%
+  layer_dense(units = 4)  # Multiple output nodes (one per target variable)
+
+# Compile the model
+model %>% compile(
+  loss = "mse",  # Mean Squared Error for regression
+  optimizer = optimizer_adam()
+  # metrics = c("mae")  # Mean Absolute Error
+)
+```
+
+```{R}
+# Load libraries
+library(reticulate)
+library(tensorflow)
+library(keras)
+
+# Set up Conda environment (adjust path if needed)
+use_condaenv("base")
+
+# Verify TensorFlow
+tf$print(tf$constant("Hello, TensorFlow!"))
+
+# Define some dummy data
+# x_train <- matrix(runif(1000), nrow = 100, ncol = 10) # 100 samples, 10 features
+# y_train <- to_categorical(sample(0:1, 100, replace = TRUE), num_classes = 2) # Binary labels
+
+# Build the model
+model <- keras_model_sequential() %>%
+  layer_dense(units = 16, activation = "relu", input_shape = c(10)) %>%
+  layer_dense(units = 8, activation = "relu") %>%
+  layer_dense(units = 2, activation = "softmax")
+
+# Compile the model
+model %>% compile(
+  optimizer = "adam",
+  loss = "categorical_crossentropy",
+  metrics = c("accuracy")
+)
+
+# Train the model
+model %>% fit(
+  x = x_train,
+  y = y_train,
+  epochs = 10,
+  batch_size = 32,
+  validation_split = 0.2
+)
+
+# Summary
+summary(model)
+```
+
+```{R}
+library(reticulate)
+
+# Create a new Conda environment
+conda_create("r-keras", packages = "python=3.9")
+use_condaenv("r-keras")
+
+# Install compatible TensorFlow and Keras
+library(keras)
+install_keras(method = "conda", tensorflow = "2.10.0")
+```
+
+```{R}
+library(reticulate)
+use_python("C:/Users/DucDo/anaconda3/python.exe", required = TRUE)
+
+use_condaenv("r-keras", conda = "C:/Users/DucDo/anaconda3/Scripts/conda.exe")
+install_tensorflow(version = "2.10.0", method = "conda")
+
+library(tensorflow)
+
+tf$print(tf$constant("Hello, TensorFlow!"))
+
+# Just create a model
+model <- keras_model_sequential(input_shape = c(10))
+model %>% layer_dense(units = 16, activation = "relu")
+
+# Try compiling
+model %>% compile(optimizer = "adam", loss = "binary_crossentropy")
+
+summary(model)
+```

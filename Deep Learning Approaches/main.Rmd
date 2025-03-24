@@ -1,0 +1,79 @@
+---
+title: "main"
+author: "Duc Do"
+date: "2025-03-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R}
+# Example: Load dataset (adjust based on your actual data source)
+df <- read.csv("../formated_data.csv")
+head(df)
+```
+
+```{R}
+library(tidyverse)
+
+# Define predictors (exclude Date, Time, and targets)
+predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT.))
+
+# Define multiple target variables (CO, NOx, Benzene)
+targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
+
+# Normalize data (optional but recommended)
+
+normalize <- function(x) { 
+  (x - min(x)) / (max(x) - min(x)) 
+}
+
+predictors <- as.data.frame(lapply(predictors, normalize))
+targets <- as.data.frame(lapply(targets, normalize))
+
+# Convert to matrices for Keras
+X <- as.matrix(predictors)
+Y <- as.matrix(targets)
+```
+
+```{R}
+set.seed(123)  # For reproducibility
+train_index <- sample(1:nrow(X), size = 0.8 * nrow(X))  # 80% train, 20% test
+
+X_train <- X[train_index, ]
+Y_train <- Y[train_index, ]
+
+X_test <- X[-train_index, ]
+Y_test <- Y[-train_index, ]
+```
+
+```{R}
+library(keras3)
+# library(tidyverse)
+
+model <- keras_model_sequential(input_shape = ncol(X)) %>%
+  layer_dense(units = 16, activation = "relu", name = "layer1") %>%
+  layer_dense(units = 32, activation = "relu", name = "layer2") %>%
+  layer_dense(units = ncol(Y), name = "layer3")
+
+# Compile the model
+model |> compile(
+  optimizer = "adam",
+  loss = "mse",            # Mean Squared Error (for regression)
+  metrics = list("mae")    # Mean Absolute Error (for regression)
+)
+
+# Train the model
+model |> fit(
+  X_train, Y_train,                  # Training data
+  epochs = 20,           # Number of epochs
+  batch_size = 32,       # Batch size
+  validation_split = 0.2  # 20% of data for validation
+)
+
+# View summary of the model
+summary(model)
+```
+

@@ -22,13 +22,17 @@ library("tidyverse")
 ```
 ```{R}
 # Install devtools
-install.packages("devtools")
+if (!require("devtools")) {
+  install.packages("devtools")
+}
 
 # Install tensorflow:
 devtools::install_github("rstudio/tensorflow")
 
 # install reticulate:
-install.packages("reticulate")
+if (!require("reticulate")) {
+  install.packages("reticulate")
+}
 
 library(reticulate)
 
@@ -44,14 +48,22 @@ use_condaenv("base")
 # Python environment:
 # use_virtualenv("myenv")
 
+# Install tensorflow
 library(tensorflow)
 
-# Install tensorflow
-install_tensorflow()
+# Check if TensorFlow is available
+if (!tensorflow::tf$executing_eagerly()) {
+  message("TensorFlow not found. Installing now...")
+  install_tensorflow()
+}
 
 tf$print(
   tf$constant('Hello, TensorFlow!')
   )
+
+library("tidyverse")
+library(keras)
+
 ```
 
 ```{R}

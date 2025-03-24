@@ -1,0 +1,92 @@
+---
+title: "test"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{R}
+#!/usr/bin/env Rscript
+
+if(!requireNamespace("remotes")) install.packages("remotes")
+
+remotes::update_packages()
+remotes::install_cran(c("readr", "tibble", "zip", "fs", "listarrays"))
+
+if("--fresh" %in% commandArgs(TRUE)) {
+  reticulate::miniconda_uninstall()
+  unlink("~/.pyenv", recursive = TRUE)
+  unlink("~/.virtualenvs/r-reticulate", recursive = TRUE)
+}
+
+
+python <- reticulate::install_python("3.9:latest")
+reticulate::virtualenv_create("r-reticulate", python = python)
+
+keras::install_keras(
+  envname = "r-reticulate",
+  extra_packages = c("keras-tuner", "ipython", "kaggle"))
+if(Sys.info()["sysname"] == "Linux")
+  reticulate::py_install(
+    "numpy",
+    envname = "r-reticulate",
+    pip = TRUE,
+    pip_options = c("--force-reinstall", "--no-binary numpy")
+  )
+
+
+```
+
+```{R}
+library(tidyverse)
+
+library(keras3)
+mnist <- dataset_mnist()
+x_train <- mnist$train$x
+y_train <- mnist$train$y
+x_test <- mnist$test$x
+y_test <- mnist$test$y
+```
+
+```{R}
+# reshape
+x_train <- array_reshape(x_train, c(nrow(x_train), 784))
+x_test <- array_reshape(x_test, c(nrow(x_test), 784))
+# rescale
+x_train <- x_train / 255
+x_test <- x_test / 255
+
+y_train <- to_categorical(y_train, 10)
+y_test <- to_categorical(y_test, 10)
+```
+
+```{R}
+model <- keras_model_sequential(input_shape = c(784))
+model %>%
+  layer_dense(units = 256, activation = 'relu') %>%
+  layer_dropout(rate = 0.4) %>%
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 10, activation = 'softmax')
+
+summary(model)
+
+
+# plot(model)
+```
+
+```{R}
+model %>% compile(
+  loss = 'categorical_crossentropy',
+  optimizer = optimizer_rmsprop(),
+  metrics = c('accuracy')
+)
+
+history <- model %>% fit(
+  x_train, y_train,
+  epochs = 10, batch_size = 16,
+  validation_split = 0.2
+)
+```
