@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{R}
 # Example: Load dataset (adjust based on your actual data source)
-df <- read.csv("../formated_data.csv")
+df <- read.csv("formated_data.csv")
 head(df)
 ```
 
