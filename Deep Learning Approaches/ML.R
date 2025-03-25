@@ -121,25 +121,25 @@ library(caret)
 train = cbind(train_x, train_y)
 
 # List of target variables
-target_names <- c("CO.GT.", "C6H6.GT.", "NOx.GT.", "NO2.GT.")
+# target_names <- c("CO.GT.", "C6H6.GT.", "NOx.GT.", "NO2.GT.")
 
-# Initialize an empty list to store the predictions
-predictions_caret_list <- list()
+#######################################################
 
-# Loop through each target and train a model
-for (target in target_names) {
-  # Train kNN model for each target variable
-  knn_fit <- train(
-    as.formula(paste(target, "~ .")), 
-    data = train, 
-    method = "knn", 
-    tuneGrid = expand.grid(k = 5),  # Specify number of neighbors
-    trControl = trainControl(method = "cv", number = 10)  # Cross-validation
-  )
-  
-  # Make predictions
-  predictions_caret_list[[target]] <- predict(knn_fit, newdata = test_x)
-}
+# Train KNN model using caret
+knn_fit <- train(NO2.GT. ~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3., 
+                 data = train, 
+                 method = "knn",
+                 tuneGrid = expand.grid(k = 5),  # Specify number of neighbors
+                 trControl = trainControl(method = "cv", number = 10))  # Cross-validation
 
-# Check the predictions for each target
-predictions_caret_list
+# Predictions
+predictions_caret <- predict(knn_fit, newdata = test_x)
+
+# Evaluate performance
+mse_caret <- mean((predictions_caret - test_y$CO.GT.)^2)
+mse_caret
+
+
+# 0.3503605 84.74771 91115.17 13220.71
+
+#### WTF this is useless
