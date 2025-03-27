@@ -29,3 +29,6 @@ summary(sarimax_model)
 forecast_values <- forecast(sarimax_model, xreg = exog_vars, h = 48)
 
 plot(forecast_values, main="SARIMAX Forecast for NO₂", col="blue")
+
+
+sarimax_model
