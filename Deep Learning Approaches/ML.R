@@ -67,7 +67,7 @@ predictors <- predictors %>% select(-c("T", "RH", "AH"))
 library(FNN)
 
 # Split into training and testing sets
-set.seed(123)
+set.seed(2025)
 trainIndex <- sample(1:nrow(df), size = 0.8 * nrow(df))
 train_x <- predictors[trainIndex, ]
 train_y <- targets[trainIndex, ]
@@ -88,9 +88,13 @@ knn_result <- function(target) {
   mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
   # return (mse)
   
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
   # Normalize MSE by the mean of the actual values
   target_mean <- mean(test_y[[target]])
-  mse_normalized <- mse / target_mean
+  mse_normalized <- rmse / target_mean
   
   return(mse_normalized)  # Return the normalized MSE for this target
 }
@@ -102,10 +106,10 @@ knn_result <- function(target) {
 ### Well that is bad. Hold on the code is fucked.
 
 # Example usage for one target variable:
-mse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.1651042
-mse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 1.606616
-mse_NOx <- knn_result("NOx.GT.") # 5837.382       # 24.51751
-mse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 4.138624
+mse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.1651042   # 0.281908
+mse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 1.606616    # 0.4065231
+mse_NOx <- knn_result("NOx.GT.") # 5837.382       # 24.51751    # 0.3208983
+mse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 4.138624    # 0.1942453
 
 # Display MSE for each target
 mse_CO
