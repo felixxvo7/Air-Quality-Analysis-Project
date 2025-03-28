@@ -106,44 +106,95 @@ knn_result <- function(target) {
 ### Well that is bad. Hold on the code is fucked.
 
 # Example usage for one target variable:
-mse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.1651042   # 0.281908
-mse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 1.606616    # 0.4065231
-mse_NOx <- knn_result("NOx.GT.") # 5837.382       # 24.51751    # 0.3208983
-mse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 4.138624    # 0.1942453
+rmse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.5778774   # 0.2807137
+rmse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 3.601207    # 0.3714302
+rmse_NOx <- knn_result("NOx.GT.") # 5837.382       # 75.71713    # 0.3230885
+rmse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 21.05513    # 0.1953094
 
 # Display MSE for each target
-mse_CO
-mse_C6H6
-mse_NOx
-mse_NO2
+rmse_CO
+rmse_C6H6
+rmse_NOx
+rmse_NO2
 
-### Still pretty bad. The normalized mse for NOx is 2400% of the mean.
+### NO2 is the best, C6H6 is the worst.
 
 ############################ use caret library
-library(caret)
 
+# library(caret)
+# 
 train = cbind(train_x, train_y)
-
-# List of target variables
-# target_names <- c("CO.GT.", "C6H6.GT.", "NOx.GT.", "NO2.GT.")
-
-#######################################################
-
-# Train KNN model using caret
-knn_fit <- train(NO2.GT. ~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3., 
-                 data = train, 
-                 method = "knn",
-                 tuneGrid = expand.grid(k = 5),  # Specify number of neighbors
-                 trControl = trainControl(method = "cv", number = 10))  # Cross-validation
-
-# Predictions
-predictions_caret <- predict(knn_fit, newdata = test_x)
-
-# Evaluate performance
-mse_caret <- mean((predictions_caret - test_y$CO.GT.)^2)
-mse_caret
+# 
+# # List of target variables
+# # target_names <- c("CO.GT.", "C6H6.GT.", "NOx.GT.", "NO2.GT.")
+# 
+# #######################################################
+# 
+# # Train KNN model using caret
+# 
+# knn_fit <- train(NO2.GT. ~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3., 
+#                  data = train, 
+#                  method = "knn",
+#                  tuneGrid = expand.grid(k = 5),  # Specify number of neighbors
+#                  trControl = trainControl(method = "cv", number = 10))  # Cross-validation
+# 
+# # Predictions
+# predictions_caret <- predict(knn_fit, newdata = test_x)
+# 
+# # Evaluate performance
+# mse_caret <- mean((predictions_caret - test_y$CO.GT.)^2)
+# mse_caret
 
 
 # 0.3503605 84.74771 91115.17 13220.71
 
-#### WTF this is useless
+#### this is useless
+
+######################################################## Random forest
+
+library(randomForest)
+
+# test <- cbind(test_x, test_y)
+
+rf_result <- function(target) {
+  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3.")),  
+                           data = train)
+                           #importance = TRUE)  
+  
+  predictions <- predict(rf_model, test_x)
+  
+  # Evaluate model performance for multiple targets
+  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # return (mse)
+  
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
+  # Normalize MSE by the mean of the actual values
+  target_mean <- mean(test_y[[target]])
+  mse_normalized <- rmse / target_mean
+  
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
+}
+
+# Example usage for one target variable:
+rf_rmse_CO <- rf_result("CO.GT.")        # 0.5778774   # 0.2807137
+rf_rmse_C6H6 <- rf_result("C6H6.GT.")    # 3.601207    # 0.3714302
+rf_rmse_NOx <- rf_result("NOx.GT.")      # 75.71713    # 0.3230885
+rf_rmse_NO2 <- rf_result("NO2.GT.")      # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rf_rmse_CO       # 0.4806054 0.2334622
+rf_rmse_C6H6     # 2.900826  0.2991926
+rf_rmse_NOx      # 67.9865   0.2901015
+rf_rmse_NO2      # 20.07209  0.1861906
+
+### random forest is better than KNN
+
+
+################################################ K means Clustering
+
+
+
+
