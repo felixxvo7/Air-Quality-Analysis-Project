@@ -6,7 +6,7 @@ set.seed(2025)
 # Load dataset
 data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv"
 data <- read.csv(data_path)
-
+summary(data)
 # Convert Date column (modify format if necessary)
 data$Date <- as.Date(data$Date, format="%Y-%m-%d")
 
