@@ -4,6 +4,7 @@ data <- read.csv(data_path)
 # Load necessary libraries
 library(ggplot2)
 library(patchwork)
+library(lubridate)
 
 ############################################
 ## Scatter Plots for key relationships
@@ -67,3 +68,54 @@ decomp_month <- stl(no2_ts_month, s.window = "periodic")
 plot(decomp_month, main = "STL Decomposition of NO2 Time Series by Month")
 
 ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+
+##########################################
+## Trends analysis:
+##########################################
+
+# Create a "Year-Month" column for grouping
+data$Month <- floor_date(data$Datetime, "month")
+
+# Calculate monthly average NO2
+monthly_no2 <- aggregate(NO2.GT. ~ Month, data, mean)
+
+# Plot
+ggplot(monthly_no2, aes(x = Month, y = NO2.GT.)) +
+  geom_line(color = "blue") +
+  geom_point(color = "darkred") +
+  labs(title = "Monthly Average NO2 Levels",
+       x = "Month", y = "NO2 Concentration (µg/m³)") +
+  theme_minimal()
+
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Extract hour and month
+data$Hour <- hour(data$Datetime)
+data$MonthNum <- month(data$Datetime, label = TRUE)
+
+# Aggregate: average NO₂ by hour and month
+heatmap_data <- data %>%
+  group_by(MonthNum, Hour) %>%
+  summarise(Avg_NO2 = mean(NO2.GT., na.rm = TRUE))
+
+# Plot heatmap
+ggplot(heatmap_data, aes(x = Hour, y = MonthNum, fill = Avg_NO2)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(title = "Heatmap of NO₂ by Hour and Month",
+       x = "Hour of Day", y = "Month",
+       fill = "Avg NO₂") +
+  theme_minimal()
+
+
+# Month boxplot
+ggplot(data, aes(x = MonthNum, y = NO2.GT.)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Monthly Distribution of NO2", x = "Month", y = "NO₂ (µg/m³)") +
+  theme_minimal()
+
