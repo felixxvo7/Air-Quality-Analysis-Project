@@ -11,7 +11,7 @@ output:
 ### Formula (Using **Polynomial Regression** for C6H6):
 
 $$
-PAN_{proxy} = a \times NOx + b \times C6H6 + c \times C6H6^2 + d \times O_3 + e \times T
+PAN_{proxy} = a \times NOx + b\times NOx^2 + c \times C6H6 + d\times C6H6^2 + e \times O_3 + f \times T
 $$ Where:
 
 \- **NOx (NO + NO₂)** → Major precursor for PAN.
@@ -48,11 +48,11 @@ $$ Where:
 \- **T (Temperature)** → Affects the equilibrium between HONO formation and photolysis.
 
 |  |  |
-|----|----|
+|------------------------------------|------------------------------------|
 | **NOx × RH** | More HONO forms under humid conditions because NO₂ reacts with water vapor. |
 
 |  |  |
-|----|----|
+|------------------------------------|------------------------------------|
 | **NOx × T** | At higher temperatures, HONO photolyzes faster, reducing its concentration. |
 
 #### Sources:

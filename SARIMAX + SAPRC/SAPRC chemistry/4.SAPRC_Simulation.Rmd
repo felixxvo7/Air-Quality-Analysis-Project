@@ -1,0 +1,135 @@
+---
+title: "4.SAPRC_Simulation"
+author: "Felix Vo"
+date: "2025-03-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# SAPRC exogenous variables in Biochemistry:
+
+## Approximate PAN, HONO, and SAPRC Proxy
+```{r, echo = FALSE}
+# Load necessary packages
+library(dplyr)
+```
+
+```{r}
+data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv"
+data <- read.csv(data_path)
+```
+
+## 1. Peroxyacetyl Nitrate (PAN) Approximation
+
+### Formula (Using **Polynomial Regression** for C6H6):
+
+$$
+PAN_{proxy} = a \times NOx + b\times NOx^2 + c \times C6H6 + d\times C6H6^2 + e \times O_3 + f \times T
+$$ 
+Where:
+
+\- **NOx (NO + NO₂)** → Major precursor for PAN.
+
+-   **C6H6 (Benzene)** → A proxy for VOCs that contribute to PAN formation.
+
+\- **C6H6² (Quadratic Term)** → Captures nonlinear VOC effects.
+
+\- **O₃ (Ozone sensor value)** → PAN is strongly associated with photochemical smog.
+
+\- **T (Temperature)** → Higher temperatures accelerate PAN formation.
+
+```{r}
+
+# Replace missing values and prepare data
+data <- data %>%
+  mutate(across(c(NOx.GT., C6H6.GT., PT08.S5.O3., T, RH), ~na_if(., -200))) %>%
+  filter(!is.na(NOx.GT.), !is.na(C6H6.GT.), !is.na(PT08.S5.O3.), !is.na(T), !is.na(RH))
+
+# Generate interaction and polynomial terms
+data_model  <- data %>%
+  mutate(
+    # Polynomial terms
+    NOx2 = NOx.GT.^2,
+    C6H6_2 = C6H6.GT.^2,
+
+    # Interaction terms
+    NOx_RH = NOx.GT. * RH,
+    NOx_T = NOx.GT. * T
+  )
+
+```
+```{r}
+
+# === 2. Estimate PAN Proxy Coefficients ===
+model_pan <- lm(NO2.GT. ~ NOx.GT. + NOx2 + C6H6.GT. + C6H6_2 + PT08.S5.O3. + T, data = data_model)
+cat("\n=== PAN Proxy Coefficients ===\n")
+print(coef(summary(model_pan)))
+
+```
+```{r}
+# === 2. PAN Proxy ===
+# PAN_proxy = a * NOx + b * NOx^2 + c * C6H6 + d * C6H6^2 + e * O3 + f * T
+data_model <- data_model %>%
+  mutate(PAN_proxy = 0.225 * NOx.GT. - 0.000105 * NOx2 + 1.72 * C6H6.GT. - 0.0557 * C6H6_2 +
+           0.0238 * PT08.S5.O3. - 0.202 * T + 37.04)
+```
+
+
+
+## 2. Nitrous Acid (HONO) Approximation
+
+### Formula:
+
+$$
+HONO_{proxy} = f \times NOx + g \times RH + h \times (NOx\times Rh) + i \times T + j  \times(NO_x\times T)
+$$ Where:
+
+\- **NOx (NO + NO₂)** → HONO is formed from heterogeneous NO₂ reactions.
+
+\- **RH (Relative Humidity)** → Surface chemistry enhances HONO formation under humid conditions.
+
+\- **NOx Sensor (PT08.S3.NOx.)** → Used as an alternative for NO₂ levels.
+
+\- **T (Temperature)** → Affects the equilibrium between HONO formation and photolysis.
+
+```{r}
+# === 1. Estimate HONO Proxy Coefficients ===
+model_hono <- lm(NO2.GT. ~ NOx.GT. + RH + NOx_RH + T + NOx_T, data = data_model)
+cat("=== HONO Proxy Coefficients ===\n")
+print(coef(summary(model_hono)))
+
+```
+
+```{r}
+# === 1. HONO Proxy ===
+# HONO_proxy = f * NOx + g * RH + h * (NOx * RH) + i * T + j * (NOx * T)
+data_model <- data_model %>%
+  mutate(HONO_proxy = 0.328 * NOx.GT. - 0.499 * RH - 0.00204 * NOx_RH - 0.422 * T - 0.00246 * NOx_T + 98.30)
+```
+
+```{r}
+# === 3. SAPRC Proxy ===
+# SAPRC_proxy = a * NOx + b * C6H6 + c * C6H6^2 + d * O3 + e * T
+data_model <- data_model %>%
+  mutate(SAPRC_proxy = 0.121 * NOx.GT. + 2.885 * C6H6.GT. - 0.0891 * C6H6_2 +
+           0.0300 * PT08.S5.O3. - 0.443 * T + 42.94)
+
+# Optional: check correlation with NO2
+cor(data_model$HONO_proxy, data_model$NO2.GT., use = "complete.obs")
+cor(data_model$PAN_proxy, data_model$NO2.GT., use = "complete.obs")
+cor(data_model$SAPRC_proxy, data_model$NO2.GT., use = "complete.obs")
+```
+```{r}
+write.csv(data_model, "SAPRC_data.csv", row.names = FALSE)
+```
+```{r}
+library(ggcorrplot)
+data_numeric <- data_model %>% select(NO2.GT.,CO.GT., NOx.GT., PT08.S5.O3., T, RH, PAN_proxy, HONO_proxy, SAPRC_proxy )
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+```
+
