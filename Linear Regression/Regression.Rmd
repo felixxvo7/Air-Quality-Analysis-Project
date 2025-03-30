@@ -1,0 +1,273 @@
+---
+title: "Regression"
+author: "Parth Pansara"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+data = read_csv("final_cleaned_data.csv")
+```
+```{r}
+library(randomForest)
+library(caret)       # for evaluation metrics
+library(ggplot2)
+library(dplyr)
+library(knitr)
+```
+```{r}
+# Convert Time to Hour
+data$Hour <- as.numeric(substr(data$Time, 1, 2))
+
+# Create a new dataframe with required columns
+df <- data %>%
+  select(CO.GT., T, RH, Hour, PT08.S1.CO.) %>%
+  na.omit()
+
+#Rename columns for simplicity
+colnames(df) <- c("CO", "Temperature", "Humidity", "Hour", "SensorCO")
+
+#normalize T and RH
+df$Temperature <- scale(df$Temperature)
+df$Humidity <- scale(df$Humidity)
+```
+
+why do we normalize T and RH?
+
+We normalize T and RH to put them on the same scale, ensuring fair contribution in models like Linear Regression. Without normalization, variables with larger ranges (like RH) can dominate the model. It improves interpretability, especially for comparing feature importance. While Random Forest doesn’t require normalization, it doesn’t hurt. 
+
+```{r}
+# Evaluation function for model performance
+eval_model <- function(actual, predicted) {
+  data.frame(
+    R2 = R2(predicted, actual),
+    RMSE = RMSE(predicted, actual),
+    MAE = MAE(predicted, actual)
+  )
+}
+```
+
+```{r}
+#Train-Test Split
+set.seed(123)
+trainIndex <- createDataPartition(df$CO, p = 0.8, list = FALSE)
+train <- df[trainIndex, ]
+test <- df[-trainIndex, ]
+```
+
+
+why do we need train_test split?
+
+We do a train-test split to evaluate how well our model performs on unseen data. The training set is used to build (fit) the model, while the test set simulates new data to assess prediction accuracy. This helps detect overfitting — when a model memorizes the training data but fails to generalize. Without splitting, we risk overly optimistic results. It’s essential for building reliable, real-world models.
+
+```{r}
+# --- Baseline Model (without SensorCO) ---
+lm_base <- lm(CO ~ Temperature + Humidity + Hour, data = train)
+summary(lm_base)
+lm_base_preds <- predict(lm_base, test)
+lm_base_metrics <- eval_model(test$CO, lm_base_preds)
+print(lm_base_metrics)
+
+# --- Enhanced Model (with SensorCO) ---
+lm_enh <- lm(CO ~ Temperature + Humidity + Hour + SensorCO, data = train)
+summary(lm_enh)
+lm_enh_preds <- predict(lm_enh, test)
+lm_enh_metrics <- eval_model(test$CO, lm_enh_preds)
+print(lm_enh_metrics)
+```
+Model with SensorCO:
+- Explains ~69.5% of the variation in CO(GT) — a huge improvement.
+- Has a much lower residual error (0.77 vs 1.29).
+- SensorCO has a very strong effect (t-value 115!).
+- All variables are highly significant (p < 0.001).
+
+Model without SensorCO:
+- Only explains ~15.6% of variation.
+- Humidity and Hour help, but not nearly enough.
+- Temperature wasn't even statistically significant (p = 0.129).
+
+
+We first built a linear regression model using only environmental variables (Temperature, Humidity, and Hour). This baseline model achieved an $R^2$ of 0.156, indicating a weak fit. After adding SensorCO — a sensor response variable — the $R^2$ jumped to 0.695, and residual error decreased substantially.
+This demonstrates that sensor data significantly improves the model's ability to predict CO(GT), confirming a strong nonlinear or sensor-driven component in CO prediction.
+
+
+```{r}
+# Random Forest Baseline (without SensorCO)
+rf_base <- randomForest(CO ~ Temperature + Humidity + Hour, data = train)
+rf_base_preds <- predict(rf_base, test)
+rf_base_metrics <- eval_model(test$CO, rf_base_preds)
+print(rf_base_metrics)
+
+# Random Forest Enhanced (with SensorCO)
+rf_enh <- randomForest(CO ~ Temperature + Humidity + Hour + SensorCO, data = train)
+rf_enh_preds <- predict(rf_enh, test)
+rf_enh_metrics <- eval_model(test$CO, rf_enh_preds)
+print(rf_enh_metrics)
+```
+```{r}
+model_results <- data.frame(
+  Model = c(
+    "Linear Regression (No SensorCO)",
+    "Linear Regression (With SensorCO)",
+    "Random Forest (No SensorCO)",
+    "Random Forest (With SensorCO)"
+  ),
+  R2 = c(0.153, 0.723, 0.412, 0.829),
+  RMSE = c(1.304, 0.748, 1.087, 0.595),
+  MAE = c(0.985, 0.507, 0.765, 0.407)
+)
+
+# Display as a formatted table
+kable(model_results, caption = "Model Comparison: CO(GT) Prediction Performance")
+```
+
+- SensorCO drastically improves accuracy in both models.
+- Random Forest outperforms Linear Regression in both baseline and enhanced versions.
+- Best model: Random Forest with SensorCO ($R^2$ = 0.83, RMSE = 0.595, MAE = 0.407)
+
+We compared linear and nonlinear regression models to predict carbon monoxide levels (CO(GT)) using environmental variables and sensor data. In the baseline models (without sensor input), linear regression achieved an $R^2$ of 0.153, while Random Forest reached 0.412. After including the sensor variable PT08.S1.CO., performance improved significantly: $R^2$ increased to 0.723 for the linear model and to 0.829 for Random Forest. This demonstrates that sensor input plays a vital role in accurately predicting CO levels, and that nonlinear models like Random Forest provide a superior fit for the data.
+
+```{r}
+# Residuals from best model (Random Forest with SensorCO)
+residuals_rf <- test$CO - rf_enh_preds
+
+ggplot(data.frame(Hour = test$Hour, Residuals = residuals_rf), aes(x = Hour, y = Residuals)) +
+  geom_point(alpha = 0.4) +
+  geom_smooth(color = "blue") +
+  ggtitle("Residuals vs Hour (Random Forest)") +
+  xlab("Hour") + ylab("Residuals")
+```
+
+This plot shows the residuals (prediction errors) across different hours of the day. The residuals are generally centered around zero with no clear pattern, suggesting that the Random Forest model handles time-of-day variation well and does not exhibit time-based bias. The smooth trend line is fairly flat, which supports the assumption of well-distributed errors over time.
+
+```{r}
+ggplot(data.frame(Actual = test$CO, Predicted = rf_enh_preds), aes(x = Actual, y = Predicted)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  ggtitle("Random Forest: Predicted vs Actual CO(GT)") +
+  xlab("Actual CO(GT)") + ylab("Predicted CO(GT)")
+```
+
+This scatter plot compares the actual vs. predicted CO(GT) values. The data points are closely clustered around the diagonal reference line (dashed red), especially in the lower range where most values lie. This indicates a strong correlation and accurate predictions from the Random Forest model. Slight underestimation is visible at higher CO levels, likely due to fewer high-concentration cases in the training data.
+
+```{r}
+# Create a new dataframe without CO.GT. (target) and any irrelevant vars (like Date/Time)
+df_full <- data %>%
+  select(-Date, -Time) %>%
+  rename(CO = CO.GT.)
+
+set.seed(123)
+trainIndex <- createDataPartition(df_full$CO, p = 0.8, list = FALSE)
+train <- df_full[trainIndex, ]
+test <- df_full[-trainIndex, ]
+```
+
+```{r}
+lm_all <- lm(CO ~ ., data = train)
+summary(lm_all)  # Optional: See which predictors are significant
+
+# Predict and evaluate
+lm_all_preds <- predict(lm_all, test)
+lm_all_metrics <- eval_model(test$CO, lm_all_preds)
+
+print("Full Linear Model (All Variables):")
+print(lm_all_metrics)
+```
+```{r}
+rf_model <- randomForest(CO ~ ., data = train, ntree = 500, importance = TRUE)
+rf_preds <- predict(rf_model, newdata = test)
+rf_metrics <- eval_model(test$CO, rf_preds)
+print(rf_metrics)
+```
+```{r}
+# Fit baseline model (predicts the mean)
+lm_base <- lm(CO ~ 1, data = train)
+
+# Predict on test set
+base_preds <- predict(lm_base, newdata = test)
+
+# Evaluate
+baseline_metrics <- eval_model(test$CO, base_preds)
+print("Baseline Model (No Predictors):")
+print(baseline_metrics)
+```
+```{r}
+# Linear model using only Temperature
+lm_temp <- lm(CO ~ T, data = train)
+
+# Predict
+temp_preds <- predict(lm_temp, newdata = test)
+
+# Evaluate
+temp_metrics <- eval_model(test$CO, temp_preds)
+print("Single Variable Model (Temperature):")
+print(temp_metrics)
+```
+```{r}
+lm_rh <- lm(CO ~ RH, data = train)
+rh_preds <- predict(lm_rh, newdata = test)
+rh_metrics <- eval_model(test$CO, rh_preds)
+print("Single Variable Model (RH):")
+print(rh_metrics)
+```
+
+```{r}
+# Load ggplot2
+library(ggplot2)
+model_results <- data.frame(
+  Model = c("Baseline", "Single Var", "Selected Vars", "All Vars"),
+  R2 = c(0.00, 0.15, 0.72, 0.91),
+  RMSE = c(1.30, 1.10, 0.75, 0.43),
+  MAE = c(0.98, 0.76, 0.51, 0.27)
+)
+# Example: RMSE Comparison Chart
+ggplot(model_results, aes(x = Model, y = RMSE)) +
+  geom_col(fill = "steelblue") +
+  ggtitle("Model Comparison by RMSE") +
+  ylab("RMSE") + xlab("Model Type") +
+  theme_minimal()
+```
+```{r}
+# For R-squared
+ggplot(model_results, aes(x = Model, y = R2)) +
+  geom_col(fill = "darkgreen") +
+  ggtitle("Model Comparison by R²") +
+  ylab("R²") + xlab("Model Type") +
+  theme_minimal()
+```
+
+Why is RMSE for all variables lower than RMSE for selected variables?
+
+ **1. More Predictors = More Flexibility**
+The model with all variables has more information to work with — even if some predictors are weak, they can still help explain small variations in CO. It's like throwing more tools into the toolbox — even if you don’t need them all, they might help tighten the fit a little.
+
+**2. Correlated Variables Improve Fit**
+Variables like C6H6.GT., NOx.GT., and PT08.S5.O3. are highly correlated with CO(GT) — as shown in your correlation matrix. Even though SensorCO is strong, those other variables help capture subtle patterns that SensorCO alone might miss.
+
+**3. BUT: Lower RMSE Doesn't Always Mean "Better"**
+More predictors can lead to:
+Overfitting (fitting the training data too well, generalizing worse)
+Less interpretability
+Higher complexity in deployment
+
+So unless RMSE drops significantly, many analysts prefer a simpler model with slightly higher RMSE if it's easier to explain and deploy.
+
+So yes, all variables will often give you the lowest RMSE, but your selected model is still strong, interpretable, and performs really well — which is often a better tradeoff in real-world data science.
+
+**Why Using Selected Variables Is a Better Option:**
+Interpretability: Easier to understand and explain the model with fewer, meaningful variables.
+
+Avoids Overfitting: Reduces the risk of fitting noise, especially with highly correlated predictors.
+
+Real-Time Applicability: Selected variables like Temperature, Humidity, Hour, and SensorCO are easily measurable in real time.
+
+Strong Performance: Achieves high accuracy ($R^2$ = 0.72) with much less complexity than the full model.
+
+
+
+
