@@ -195,6 +195,42 @@ rf_rmse_NO2      # 20.07209  0.1861906
 
 ################################################ K means Clustering
 
+# df_normalized = as.data.frame(lapply(df[,-c(1, 2)], normalize))
 
+# Ensure month is a factor with all levels present
+df$month <- factor(df$month, levels = month.abb)  
 
+# Assign colors explicitly to each month
+month_colors <- setNames(rainbow(length(levels(df$month))), levels(df$month))
+months_colors <- month_colors[df$month]  
+
+# PCA analysis
+pca_result <- prcomp(df[, -c(1, 2, 15)], center = TRUE, scale = TRUE)
+
+# Proportion of variance
+prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+round(prcomp_proportionVariate, 5)
+
+# Plot
+plot(pca_result$x[, 1], pca_result$x[, 2], 
+     xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
+     col = months_colors, pch = 19, 
+     main = "PCA dimension reduction")
+
+# Correct legend with all months labeled
+
+legend("bottomright", legend = names(month_colors),
+       col = month_colors, pch = 19, cex = 0.8)
+
+# there is a pattern for months
+
+## [1] 237 13 69 71 179
+library(factoextra)
+
+fviz_nbclust(df[, -c(1, 2, 15)], kmeans, method = "silhouette")
+
+results <- kmeans(df[, -c(1, 2, 15)], centers = 2)
+fviz_cluster(results, data = df[, -c(1, 2, 15)], geom = "point")
+
+## no meaning for now
 
