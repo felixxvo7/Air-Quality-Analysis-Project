@@ -38,11 +38,15 @@ correlation_heatmap(cor_matrix = cor_matrix)
 
 library(tidyverse)
 
+df$month = as.integer(df$month)
+
 # Define predictors (exclude Date, Time, and targets)
-predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT.))
+# predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., categorize_AQI))
+predictors <- df %>% select(-c(Date, Time, NO2.GT.))
 
 # Define multiple target variables (CO, NOx, Benzene)
 targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
+targets <- df %>% select(NO2.GT.)
 
 # Normalize data (optional but recommended)
 
@@ -78,22 +82,26 @@ knn_result <- function(target) {
   # Train kNN regression model
   knn_fit <- knn.reg(train = train_x,
                         test = test_x,
-                        y = train_y[[target]],
+                        y = train_y,
+                        # y = train_y[[target]],
                         k = 5)  # k = 5 nearest neighbors
   
   # Predictions
   predictions <- knn_fit$pred
   
   # Evaluate model performance for multiple targets
-  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  mse <- mean((predictions - test_y)^2)
   # return (mse)
   
   rmse <- sqrt(mse)
   
-  # return (rmse)
+  return (rmse)
   
   # Normalize MSE by the mean of the actual values
-  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y[[target]])
+  target_mean <- mean(test_y)
+  
   mse_normalized <- rmse / target_mean
   
   return(mse_normalized)  # Return the normalized MSE for this target
@@ -118,6 +126,30 @@ rmse_NOx
 rmse_NO2
 
 ### NO2 is the best, C6H6 is the worst.
+
+
+###=========================================
+# use T, AH and RH reduces the rmse
+# > rmse_CO
+# [1] 0.2595928
+# > rmse_C6H6
+# [1] 0.2542076
+# > rmse_NOx
+# [1] 0.2914516
+# > rmse_NO2
+# [1] 0.17697
+
+# use month reduces rmse even more
+
+# > rmse_CO
+# [1] 0.2418609
+# > rmse_C6H6
+# [1] 0.1896829
+# > rmse_NOx
+# [1] 0.2542317
+# > rmse_NO2
+# [1] 0.1633321
+
 
 ############################ use caret library
 
@@ -157,7 +189,7 @@ library(randomForest)
 # test <- cbind(test_x, test_y)
 
 rf_result <- function(target) {
-  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3.")),  
+  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3. + T + RH + AH + month")),  
                            data = train)
                            #importance = TRUE)  
   
@@ -192,20 +224,39 @@ rf_rmse_NO2      # 20.07209  0.1861906
 
 ### random forest is better than KNN
 
+# using T, AH, RH and month reduces rmse like knn
+# > rf_rmse_CO      
+# [1] 0.4385208
+# [1] 0.2130189
+# 
+# > rf_rmse_C6H6    
+# [1] 1.562383
+# [1] 0.161145
+# 
+# > rf_rmse_NOx      
+# [1] 55.14515
+# [1] 0.2353069
+# 
+# > rf_rmse_NO2     
+# [1] 16.7216
+# [1] 0.1551112
 
 ################################################ K means Clustering
 
 # df_normalized = as.data.frame(lapply(df[,-c(1, 2)], normalize))
 
-# Ensure month is a factor with all levels present
-df$month <- factor(df$month, levels = month.abb)  
+df$Date <- as.Date(df$Date)
+df$month <- format(df$Date, "%m")  # Extract month as number (01, 02, ...)
+df$month <- factor(df$month, levels = sprintf("%02d", 1:12))  # Ensure proper factor levels with leading zero  
 
 # Assign colors explicitly to each month
 month_colors <- setNames(rainbow(length(levels(df$month))), levels(df$month))
 months_colors <- month_colors[df$month]  
 
 # PCA analysis
-pca_result <- prcomp(df[, -c(1, 2, 15)], center = TRUE, scale = TRUE)
+# pca_result <- prcomp(df[, -c(1, 2, 15, 16)], center = TRUE, scale = TRUE)
+pca_result <- prcomp(df[, c(4, 6, 8, 10, 11)], center = TRUE, scale = TRUE)
+
 
 # Proportion of variance
 prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
@@ -220,7 +271,7 @@ plot(pca_result$x[, 1], pca_result$x[, 2],
 # Correct legend with all months labeled
 
 legend("bottomright", legend = names(month_colors),
-       col = month_colors, pch = 19, cex = 0.8)
+       col = month_colors, pch = 19, cex = 0.5)
 
 # there is a pattern for months
 
@@ -234,3 +285,39 @@ fviz_cluster(results, data = df[, -c(1, 2, 15)], geom = "point")
 
 ## no meaning for now
 
+##________________________________________________________________ AQI
+
+# Apply AQI function to each row in dataset
+data = data %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI))
+
+df$categorize_AQI = data$AQI_Category
+df$categorize_AQI <- as.factor(df$categorize_AQI)  # Ensure it's a factor
+
+# Assign colors explicitly to each month
+AQI_colors <- setNames(rainbow(length(levels(df$categorize_AQI))), levels(df$categorize_AQI))
+AQIs_colors <- AQI_colors[df$categorize_AQI]
+
+# Plot
+plot(pca_result$x[, 1], pca_result$x[, 2], 
+     xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
+     col = AQIs_colors, pch = 19, 
+     main = "PCA dimension reduction")
+
+# Correct legend with all months labeled
+
+legend("bottomright", legend = names(AQI_colors),
+       col = AQI_colors, pch = 19, cex = 0.8)
+
+library(ggplot2)
+
+# Create a data frame for ggplot
+pca_df <- data.frame(PC1 = pca_result$x[, 1], PC2 = pca_result$x[, 2], AQI_Category = df$categorize_AQI)
+
+# Plot using ggplot2
+ggplot(pca_df, aes(x = PC1, y = PC2, color = AQI_Category)) +
+  geom_point(size = 3) +
+  labs(title = "PCA dimension reduction", 
+       x = "PC1 (55.91%)", y = "PC2 (19.76%)") +
+  theme_minimal() +
+  theme(legend.position = "right")  # Easily place the legend on the right
