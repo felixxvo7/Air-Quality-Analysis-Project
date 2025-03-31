@@ -146,34 +146,84 @@ aqi_trend = data %>%
   left_join(daily_dominant, by = "Date") 
 
 ## -----------------------------------------------------------------------------------------------------------
+# Define exact seasonal periods (covering full dataset range)
+season_periods <- data.frame(
+  start = as.Date(c("2004-03-10", "2004-06-01", "2004-09-01", "2004-12-01", 
+                    "2005-03-01")),
+  end = as.Date(c("2004-05-31", "2004-08-31", "2004-11-30", "2005-02-28", 
+                  "2005-04-04")),
+  season = c("Spring", "Summer", "Fall", "Winter", "Spring")  
+)
+
+# Create the plot
 ggplot(aqi_trend) +
+  # 1. Add seasonal background shading
+  geom_rect(
+    data = season_periods,
+    aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = season),
+    alpha = 0.1
+  ) +
+  
+  # 2. AQI trend lines
   geom_segment(
-    aes(
-      x = Date, 
-      xend = lead(Date),
-      y = Average_AQI, 
-      yend = lead(Average_AQI),
-      color = Dominant_Pollutant  # Color mapping goes inside aes()
-    ),
-    lineend = "round"
+    aes(x = Date, xend = lead(Date),
+        y = Average_AQI, yend = lead(Average_AQI),
+        color = Dominant_Pollutant)
+  ) +
+  
+  # 3. Vertical lines for season transitions
+  geom_vline(
+    data = season_periods[-1, ],  # Exclude first start date
+    aes(xintercept = start),
+    linetype = "dashed",
+    color = "gray30", 
+    size = 0.3,
+    alpha = 0.5
+  ) +
+  
+  # 4. Season labels
+  geom_text(
+    data = season_periods,
+    aes(x = start + (end - start)/2 + 3,
+        y = max(aqi_trend$Average_AQI, na.rm = TRUE) * 1.05,
+        label = season),
+    size = 3.5, 
+    fontface = "bold",
+    color = "black",
+    show.legend = FALSE
+  ) +
+  
+  # 5. Color scales
+  scale_fill_manual(
+    values = c("Spring" = "#66c2a5", 
+               "Summer" = "#fc8d62",
+               "Fall" = "#8da0cb",
+               "Winter" = "#e78ac3"),
+    guide = "none"  # Hide fill legend
   ) +
   scale_color_manual(
-    values = c(
-      "CO" = "#377eb8", 
-      "C6H6" = "#4daf4a",
-      "NOx" = "#ff7f00", 
-      "NO2" = "#e41a1c"
-    ),
+    values = c("CO" = "#377eb8", 
+               "C6H6" = "#4daf4a",
+               "NOx" = "#ff7f00", 
+               "NO2" = "#e41a1c"),
     name = "Dominant Pollutant"
   ) +
+  
+  # Adjust date axis
+  scale_x_date(
+    date_breaks = "1 month",
+    date_labels = "%b\n%Y",
+    limits = c(min(aqi_trend$Date), max(aqi_trend$Date))
+  ) +
+  
+  # Labels
   labs(
-    title = "AQI Trend Colored by Dominant Pollutant",
+    title = "AQI Trend March 2004 - April 2005",
+    subtitle = "Colored by Dominant Pollutant and with Seasonal Transitions Vertical lines",
     x = "Date",
     y = "AQI"
   ) +
   theme_minimal()
-
-
 ## -----------------------------------------------------------------------------------------------------------
 ggplot(aqi_trend, aes(x = Date, y = Average_AQI)) +
   # Main trend line
@@ -264,3 +314,4 @@ ggplot(aqi_trend, aes(x = Season, fill = AQI_Category)) +
        y = "Proportion",
        fill = "AQI Category") +
   theme_minimal()
+
