@@ -128,7 +128,7 @@ write.csv(data_model, "SAPRC_data.csv", row.names = FALSE)
 ```{r}
 library(ggcorrplot)
 data_numeric <- data_model %>% select(NO2.GT.,CO.GT., NOx.GT., PT08.S5.O3., T, RH, PAN_proxy, HONO_proxy, SAPRC_proxy )
-cor_matrix <- cor(data_numeric, use = "complete.obs")
+cor_matrix <- cor(data_numeric, use = "complete.obs", method = "spearman" )
 
 ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
 ```

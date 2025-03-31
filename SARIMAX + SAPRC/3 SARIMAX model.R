@@ -60,3 +60,25 @@ ggplot(forecast_df, aes(x = Time)) +
 
 
 checkresiduals(sarimax_model)
+
+###########################################
+## For all variable:
+###########################################
+
+target_vars <- c( "NO2.GT.","Date","Time" )
+exog_vars <- setdiff(colnames(data), target_vars)
+
+# Sample 20% for training
+set.seed(2025)
+train_indices <- sample(1:nrow(data), size = 0.2 * nrow(data))
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# Convert NO2 to time series (training)
+no2_series_train <- ts(train_data$NO2.GT., frequency = 24 * 7)
+no2_series_test <- ts(test_data$NO2.GT., frequency=24*7)
+# Define exogenous variables
+exog_vars_train <- as.matrix(train_data[, exog_vars])
+exog_vars_test <- as.matrix(test_data[, exog_vars])
+
+
