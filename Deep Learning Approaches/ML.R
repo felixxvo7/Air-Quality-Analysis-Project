@@ -1,6 +1,33 @@
 setwd("C:/Users/DucDo/OneDrive-UniversityofManitoba/Documents/University_documents/UofM/WInter2025/DATA2010/Air-Quality-Analysis-Project")
 
 df = read.csv("final_cleaned_data.csv")
+
+df_AQI = read.csv("Sensor Calibration/data_with_AQI.csv")
+
+df$Date <- as.Date(df$Date)
+df$month <- format(df$Date, "%m")  # Extract month as number (01, 02, ...)
+
+categorize_AQI = function(AQI) {
+  if (AQI <= 50) {
+    return("Good")
+  } else if (AQI <= 100) {
+    return("Moderate")
+  } else if (AQI <= 150) {
+    return("Unhealthy for Sensitive Groups")
+  } else if (AQI <= 200) {
+    return("Unhealthy")
+  } else if (AQI <= 300) {
+    return("Very Unhealthy")
+  } else {
+    return("Hazardous")
+  }
+}
+
+df$AQI = df_AQI$AQI
+# Apply AQI function to each row in dataset
+df = df %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI))
+
 head(df)
 
 sum(df == -200)
@@ -41,12 +68,12 @@ library(tidyverse)
 df$month = as.integer(df$month)
 
 # Define predictors (exclude Date, Time, and targets)
-# predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., categorize_AQI))
-predictors <- df %>% select(-c(Date, Time, NO2.GT.))
+predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
+# predictors <- df %>% select(-c(Date, Time, NO2.GT.))
 
 # Define multiple target variables (CO, NOx, Benzene)
 targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
-targets <- df %>% select(NO2.GT.)
+# targets <- df %>% select(NO2.GT.)
 
 # Normalize data (optional but recommended)
 
@@ -82,29 +109,29 @@ knn_result <- function(target) {
   # Train kNN regression model
   knn_fit <- knn.reg(train = train_x,
                         test = test_x,
-                        y = train_y,
-                        # y = train_y[[target]],
+                        # y = train_y,
+                        y = train_y[[target]],
                         k = 5)  # k = 5 nearest neighbors
   
   # Predictions
   predictions <- knn_fit$pred
   
   # Evaluate model performance for multiple targets
-  # mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
-  mse <- mean((predictions - test_y)^2)
+  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y)^2)
   # return (mse)
   
   rmse <- sqrt(mse)
   
-  return (rmse)
+  # return (rmse)
   
   # Normalize MSE by the mean of the actual values
-  # target_mean <- mean(test_y[[target]])
-  target_mean <- mean(test_y)
+  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y)
   
   mse_normalized <- rmse / target_mean
   
-  return(mse_normalized)  # Return the normalized MSE for this target
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
 }
 
 
@@ -140,14 +167,17 @@ rmse_NO2
 # [1] 0.17697
 
 # use month reduces rmse even more
-
 # > rmse_CO
+# [1] 0.4978949
 # [1] 0.2418609
 # > rmse_C6H6
+# [1] 1.839073
 # [1] 0.1896829
 # > rmse_NOx
+# [1] 59.58025
 # [1] 0.2542317
 # > rmse_NO2
+# [1] 17.60785
 # [1] 0.1633321
 
 
@@ -228,15 +258,12 @@ rf_rmse_NO2      # 20.07209  0.1861906
 # > rf_rmse_CO      
 # [1] 0.4385208
 # [1] 0.2130189
-# 
 # > rf_rmse_C6H6    
 # [1] 1.562383
 # [1] 0.161145
-# 
 # > rf_rmse_NOx      
 # [1] 55.14515
 # [1] 0.2353069
-# 
 # > rf_rmse_NO2     
 # [1] 16.7216
 # [1] 0.1551112
@@ -245,17 +272,16 @@ rf_rmse_NO2      # 20.07209  0.1861906
 
 # df_normalized = as.data.frame(lapply(df[,-c(1, 2)], normalize))
 
-df$Date <- as.Date(df$Date)
-df$month <- format(df$Date, "%m")  # Extract month as number (01, 02, ...)
 df$month <- factor(df$month, levels = sprintf("%02d", 1:12))  # Ensure proper factor levels with leading zero  
 
 # Assign colors explicitly to each month
 month_colors <- setNames(rainbow(length(levels(df$month))), levels(df$month))
-months_colors <- month_colors[df$month]  
+months_colors <- month_colors[df$month]
 
+df$month = as.integer(df$month)
 # PCA analysis
 # pca_result <- prcomp(df[, -c(1, 2, 15, 16)], center = TRUE, scale = TRUE)
-pca_result <- prcomp(df[, c(4, 6, 8, 10, 11)], center = TRUE, scale = TRUE)
+pca_result <- prcomp(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], center = TRUE, scale = TRUE)
 
 
 # Proportion of variance
@@ -264,7 +290,7 @@ round(prcomp_proportionVariate, 5)
 
 # Plot
 plot(pca_result$x[, 1], pca_result$x[, 2], 
-     xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
+     xlab = "PC1(53.42%)", ylab = "PC2(23.88%)", 
      col = months_colors, pch = 19, 
      main = "PCA dimension reduction")
 
@@ -278,46 +304,98 @@ legend("bottomright", legend = names(month_colors),
 ## [1] 237 13 69 71 179
 library(factoextra)
 
-fviz_nbclust(df[, -c(1, 2, 15)], kmeans, method = "silhouette")
+fviz_nbclust(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], kmeans, method = "silhouette")
 
-results <- kmeans(df[, -c(1, 2, 15)], centers = 2)
-fviz_cluster(results, data = df[, -c(1, 2, 15)], geom = "point")
+results <- kmeans(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], centers = 2)
+fviz_cluster(results, data = df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], geom = "point")
 
-## no meaning for now
+## no meaning for now (for both month included or excluded)
 
 ##________________________________________________________________ AQI
 
-# Apply AQI function to each row in dataset
-data = data %>%
-  mutate(AQI_Category = sapply(AQI, categorize_AQI))
 
-df$categorize_AQI = data$AQI_Category
-df$categorize_AQI <- as.factor(df$categorize_AQI)  # Ensure it's a factor
+
+df$AQI_Category <- as.factor(df$AQI_Category)  # Ensure it's a factor
 
 # Assign colors explicitly to each month
-AQI_colors <- setNames(rainbow(length(levels(df$categorize_AQI))), levels(df$categorize_AQI))
-AQIs_colors <- AQI_colors[df$categorize_AQI]
+AQI_colors <- setNames(rainbow(length(levels(df$AQI_Category))), levels(df$AQI_Category))
+AQIs_colors <- AQI_colors[df$AQI_Category]
 
-# Plot
-plot(pca_result$x[, 1], pca_result$x[, 2], 
-     xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
-     col = AQIs_colors, pch = 19, 
-     main = "PCA dimension reduction")
-
-# Correct legend with all months labeled
-
-legend("bottomright", legend = names(AQI_colors),
-       col = AQI_colors, pch = 19, cex = 0.8)
+# # Plot
+# plot(pca_result$x[, 1], pca_result$x[, 2], 
+#      xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
+#      col = AQIs_colors, pch = 19, 
+#      main = "PCA dimension reduction")
+# 
+# # Correct legend with all months labeled
+# 
+# legend("bottomright", legend = names(AQI_colors),
+#        col = AQI_colors, pch = 19, cex = 0.8)
 
 library(ggplot2)
 
 # Create a data frame for ggplot
-pca_df <- data.frame(PC1 = pca_result$x[, 1], PC2 = pca_result$x[, 2], AQI_Category = df$categorize_AQI)
+pca_df <- data.frame(PC1 = pca_result$x[, 1], PC2 = pca_result$x[, 2], AQI_Category = df$AQI_Category)
 
 # Plot using ggplot2
 ggplot(pca_df, aes(x = PC1, y = PC2, color = AQI_Category)) +
   geom_point(size = 3) +
   labs(title = "PCA dimension reduction", 
-       x = "PC1 (55.91%)", y = "PC2 (19.76%)") +
+       x = "PC1 (47.71%)", y = "PC2 (22.91%)") +
   theme_minimal() +
   theme(legend.position = "right")  # Easily place the legend on the right
+
+###================================================ KNN for AQI category 
+library(class)
+
+# y_pred <- knn(train = train[,-(10:13)], test = test_x, cl = df[,5], k = 5)
+
+AQI_cat_pred <- knn(train = train_x, test = test_x, cl = df[trainIndex, 17], k = 1)
+AQI_cat_pred = as.factor(AQI_cat_pred)
+
+AQI_cat_actual <- df[-trainIndex, 17]
+table(AQI_cat_actual, AQI_cat_pred)
+
+# Install ggplot2 if not already installed
+# install.packages("ggplot2")
+
+# library(ggplot2)
+# 
+# # Create the confusion matrix
+# cm <- table(AQI_cat_actual, AQI_cat_pred)
+# 
+# # Convert the confusion matrix to a data frame
+# cm_df <- as.data.frame(cm)
+# 
+# # Plot the confusion matrix as a heatmap
+# ggplot(cm_df, aes(x = AQI_cat_pred, y = AQI_cat_actual, fill = Freq)) +
+#   geom_tile() +
+#   scale_fill_gradient(low = "white", high = "steelblue") +
+#   theme_minimal() +
+#   labs(x = "Predicted Category", y = "Actual Category", fill = "Frequency") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# 
+# ###### proportion
+# 
+# # Normalize by the total count to get proportions
+# cm_df$Proportion <- cm_df$Freq / sum(cm_df$Freq)
+# 
+# # Plot the confusion matrix as a heatmap with proportions
+# ggplot(cm_df, aes(x = AQI_cat_pred, y = AQI_cat_actual, fill = Proportion)) +
+#   geom_tile() +
+#   scale_fill_gradient(low = "white", high = "steelblue") +
+#   theme_minimal() +
+#   labs(x = "Predicted Category", y = "Actual Category", fill = "Proportion") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Compare actual and predicted values
+correct_predictions <- sum(AQI_cat_actual == AQI_cat_pred)
+
+# Total number of predictions
+total_predictions <- length(AQI_cat_actual)
+
+# Accuracy
+accuracy <- correct_predictions / total_predictions
+accuracy     # 0.6762821 # better than k = 8, 10
+# 0.6901709 for k = 3   # better than k = 2
+# 0.6987179 for k = 1
