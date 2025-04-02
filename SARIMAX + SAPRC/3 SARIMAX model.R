@@ -20,8 +20,8 @@ test_data <- data[-train_indices, ]
 no2_series_train <- ts(train_data$NO2.GT., frequency = 24 * 7)
 no2_series_test <- ts(test_data$NO2.GT., frequency=24*7)
 # Define exogenous variables
-exog_vars_train <- as.matrix(train_data[, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH")])
-exog_vars_test <- as.matrix(test_data[, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH")])
+exog_vars_train <- as.matrix(train_data[, c("NOx.GT.", "PT08.S5.O3.", "CO.GT.")])
+exog_vars_test <- as.matrix(test_data[, c( "NOx.GT.", "PT08.S5.O3.", "CO.GT.")])
 
 # Fit SARIMAX model
 sarimax_model <- auto.arima(no2_series_train, xreg = exog_vars_train, seasonal = TRUE)
@@ -34,7 +34,7 @@ forecast_values <- forecast(sarimax_model, xreg = exog_vars_test, h = nrow(test_
 library(Metrics)
 rmse_val <- rmse(test_data$NO2.GT., forecast_values$mean)
 cat("Test RMSE:", round(rmse_val, 2), "\n")
-#Test RMSE: 24.26 
+#Test RMSE: 28.87
 
 
 ##########################################################################

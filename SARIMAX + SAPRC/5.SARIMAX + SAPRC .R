@@ -122,3 +122,141 @@ ggplot(combined_df, aes(x = Actual, y = Residual)) +
   ggtitle("Prediction Error (Residuals) vs Actual NO₂") +
   xlab("Actual NO₂") + ylab("Residual (Actual - Predicted)") +
   theme_minimal()
+
+
+# Load data
+future_data <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/SARIMAX + SAPRC/SAPRC_data.csv")
+
+# Ensure future_data has enough rows (at least 48 for 48-hour forecast)
+future_xreg <- as.matrix(future_data[1:48, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH",
+                                             "PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+
+# Forecast next 48 hours
+future_forecast <- forecast(sarimax_full, xreg = future_xreg, h = 48)
+
+# Create timestamps for future prediction (assuming hourly data)
+last_time <- as.POSIXct(tail(data$Date, 1))
+future_time <- seq(from = last_time + 3600, by = "hour", length.out = 48)
+
+# Build forecast dataframe
+forecast_df <- data.frame(
+  Time = future_time,
+  Forecast = as.numeric(future_forecast$mean),
+  Lower = future_forecast$lower[, 2],
+  Upper = future_forecast$upper[, 2]
+)
+
+# Plot
+library(ggplot2)
+ggplot(forecast_df, aes(x = Time, y = Forecast)) +
+  geom_line(color = "darkgreen", size = 1) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "lightgreen", alpha = 0.3) +
+  ggtitle("48-Hour Forecast of NO₂ (SARIMAX Full)") +
+  xlab("Time") + ylab("Predicted NO₂") +
+  theme_minimal()
+
+data$Date <- as.Date(data$Date)
+# === Load libraries ===
+library(forecast)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+# === Load dataset ===
+data <- read.csv("SAPRC_data.csv")
+data$Date <- as.Date(data$Date)
+
+# === Aggregate to weekly averages ===
+weekly_data <- data %>%
+  mutate(Week = floor_date(Date, unit = "week")) %>%
+  group_by(Week) %>%
+  summarise(
+    NO2 = mean(NO2.GT., na.rm = TRUE),
+    CO = mean(CO.GT., na.rm = TRUE),
+    NOx = mean(NOx.GT., na.rm = TRUE),
+    O3 = mean(PT08.S5.O3., na.rm = TRUE),
+    T = mean(T, na.rm = TRUE),
+    RH = mean(RH, na.rm = TRUE),
+    PAN = mean(PAN_proxy, na.rm = TRUE),
+    HONO = mean(HONO_proxy, na.rm = TRUE),
+    SAPRC = mean(SAPRC_proxy, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# === Extract Week of Year for seasonal pattern ===
+weekly_data$WeekOfYear <- isoweek(weekly_data$Week)
+
+# === Build time series and xreg matrix ===
+ts_no2 <- ts(weekly_data$NO2, frequency = 52)
+xreg_weekly <- as.matrix(weekly_data[, c("CO", "NOx", "O3", "T", "RH", "PAN", "HONO", "SAPRC")])
+
+# === Fit SARIMAX model ===
+model_weekly <- auto.arima(ts_no2, xreg = xreg_weekly, seasonal = TRUE)
+
+# === Build seasonal xreg for future (12 weeks) ===
+seasonal_means <- weekly_data %>%
+  group_by(WeekOfYear) %>%
+  summarise(across(c(CO, NOx, O3, T, RH, PAN, HONO, SAPRC), mean, na.rm = TRUE)) %>%
+  ungroup()
+
+start_week <- (isoweek(max(weekly_data$Week)) + 1) %% 52
+week_indices <- ((start_week - 1 + 0:11) %% 52) + 1
+future_xreg <- as.matrix(seasonal_means[match(week_indices, seasonal_means$WeekOfYear), -1])
+
+# === Forecast next 12 weeks ===
+forecast_result <- forecast(model_weekly, xreg = future_xreg, h = 12)
+
+# === Generate future dates ===
+last_week <- max(weekly_data$Week)
+future_weeks <- seq(from = last_week + 7, by = "week", length.out = 12)
+
+forecast_df <- data.frame(
+  Week = future_weeks,
+  Forecast = as.numeric(forecast_result$mean),
+  Lower = forecast_result$lower[, 1],
+  Upper = forecast_result$upper[, 1]
+)
+
+# === Combine historical and forecasted data ===
+full_plot_df <- weekly_data %>%
+  select(Week, NO2) %>%
+  rename(Value = NO2) %>%
+  mutate(Type = "Actual") %>%
+  bind_rows(
+    forecast_df %>%
+      select(Week, Forecast) %>%
+      rename(Value = Forecast) %>%
+      mutate(Type = "Forecast")
+  )
+
+# === Final plot ===
+ggplot() +
+  geom_line(data = full_plot_df, aes(x = Week, y = Value, color = Type), size = 1) +
+  geom_ribbon(data = forecast_df, aes(x = Week, ymin = Lower, ymax = Upper), fill = "gray", alpha = 0.3) +
+  geom_vline(xintercept = as.numeric(max(weekly_data$Week)), linetype = "dashed") +
+  scale_color_manual(values = c("Actual" = "steelblue", "Forecast" = "darkgreen")) +
+  ggtitle("12-Week NO₂ Forecast (SARIMAX Full Model with Seasonal Inputs)") +
+  xlab("Week") + ylab("Average NO₂ (µg/m³)") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
+  theme_minimal()
+
+# === Merge actual and forecast as one continuous line ===
+continuous_df <- weekly_data %>%
+  select(Week, NO2) %>%
+  rename(Value = NO2) %>%
+  bind_rows(
+    forecast_df %>%
+      select(Week, Forecast) %>%
+      rename(Value = Forecast)
+  )
+
+# === Plot with continuous line ===
+ggplot() +
+  geom_line(data = continuous_df, aes(x = Week, y = Value), color = "darkgreen", size = 1) +
+  geom_ribbon(data = forecast_df, aes(x = Week, ymin = Lower, ymax = Upper), 
+              fill = "gray", alpha = 0.3) +
+  geom_vline(xintercept = as.numeric(max(weekly_data$Week)), linetype = "dashed") +
+  ggtitle("12-Week NO2 Forecast (SARIMAX Full Model with SAPRC)") +
+  xlab("Week") + ylab("Average NO₂ (µg/m³)") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
+  theme_minimal()

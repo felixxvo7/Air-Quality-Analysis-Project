@@ -25,7 +25,7 @@ print(adf_result)
 #####################################
 ## ACF PACF AUTO CORRELATION
 #####################################
-no2_series <- ts(data$NO2.GT., frequency = 24)
+no2_series <- ts(data$NO2.GT., frequency = 24*7)
 
 plot(no2_series, main="NO2 Time Series", ylab="NO2 Concentration", xlab="Time", col="blue")
 
@@ -42,3 +42,10 @@ pacf(no2_series, main="Partial Autocorrelation Function (PACF) for NO2", lag.max
 #######################################
 ## VISUALIZATION:
 #######################################
+library(ggplot2)
+
+ggplot(data, aes(x = Datetime, y = NO2.GT.)) +
+  geom_line(color = "blue") +
+  labs(title = "NO2 Time Series", x = "Date", y = "NO2 Concentration (µg/m³)") +
+  theme_minimal()
+
