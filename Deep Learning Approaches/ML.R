@@ -399,3 +399,84 @@ accuracy <- correct_predictions / total_predictions
 accuracy     # 0.6762821 # better than k = 8, 10
 # 0.6901709 for k = 3   # better than k = 2
 # 0.6987179 for k = 1
+
+###============================ RF for AQI cat
+
+rf_AQI_cat <- randomForest(AQI_Category ~ ., data=data.frame(train_x, AQI_Category = as.factor(df[trainIndex,]$AQI_Category)))
+rf_AQI_cat_pred <- predict(rf_AQI_cat, test_x)
+table(rf_AQI_cat_pred, AQI_cat_actual)
+
+correct_predictions <- sum(AQI_cat_actual == rf_AQI_cat_pred)
+
+# Total number of predictions
+total_predictions <- length(AQI_cat_actual)
+
+# Accuracy
+accuracy <- correct_predictions / total_predictions
+accuracy # 0.7195513
+
+
+##### plot
+
+library(ggplot2)
+library(reshape2)
+
+# conf_df <- as.data.frame(table(rf_AQI_cat_pred, AQI_cat_actual))
+conf_df <- as.data.frame(table(AQI_cat_pred, AQI_cat_actual))
+
+names(conf_df) <- c("Predicted", "Actual", "Freq")
+
+###
+prop_by_actual <- conf_df %>%
+  group_by(Actual) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+# Plot counts
+p1 <- ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", name = "Count") +
+  geom_text(aes(label = Freq), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Counts)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plot proportions by actual category
+p2 <- ggplot(prop_by_actual, aes(x = Actual, y = Predicted, fill = Proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", 
+                      name = "Proportion",
+                      labels = scales::percent) +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 1)), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Proportions by Actual Category)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Calculate proportions by predicted category
+prop_by_predicted <- conf_df %>%
+  group_by(Predicted) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+# Plot proportions by predicted category
+p3 <- ggplot(prop_by_predicted, aes(x = Actual, y = Predicted, fill = Proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", 
+                      name = "Proportion",
+                      labels = scales::percent) +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 1)), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Proportions by Predicted Category)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# To display all three plots together
+# library(gridExtra)
+# grid.arrange(p1, p2, p3, ncol = 3)
+# Or if you prefer a vertical layout:
+# grid.arrange(p1, p2, p3, nrow = 3)
+
+################ RF is clearly better (best for Unhealthy and UnhealthyFSG with 79% and 74%). Make sense as those are the majorities of the dataset.
