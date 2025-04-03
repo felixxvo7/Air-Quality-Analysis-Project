@@ -1,8 +1,8 @@
 setwd("C:/Users/DucDo/OneDrive-UniversityofManitoba/Documents/University_documents/UofM/WInter2025/DATA2010/Air-Quality-Analysis-Project")
 
-df = read.csv("final_cleaned_data.csv")
+df = read.csv("Datasets/final_cleaned_data.csv")
 
-df_AQI = read.csv("Sensor Calibration/data_with_AQI.csv")
+df_AQI = read.csv("2. Correlations & Sensor Calibration/data_with_AQI.csv")
 
 df$Date <- as.Date(df$Date)
 df$month <- format(df$Date, "%m")  # Extract month as number (01, 02, ...)
@@ -68,12 +68,13 @@ library(tidyverse)
 df$month = as.integer(df$month)
 
 # Define predictors (exclude Date, Time, and targets)
-predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
+# predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
+predictors <- df %>% select(-c(Date, Time, NO2.GT., AQI, AQI_Category))
 # predictors <- df %>% select(-c(Date, Time, NO2.GT.))
 
 # Define multiple target variables (CO, NOx, Benzene)
-targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
-# targets <- df %>% select(NO2.GT.)
+# targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
+targets <- df %>% select(NO2.GT.)
 
 # Normalize data (optional but recommended)
 
@@ -216,12 +217,14 @@ train = cbind(train_x, train_y)
 
 library(randomForest)
 
+colnames(train)[colnames(train) == "train_y"] <- "NO2.GT."
+
 # test <- cbind(test_x, test_y)
 
 rf_result_df = list()
 
 rf_result <- function(target) {
-  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3. + T + RH + AH + month")),  
+  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3. + T + RH + AH + month + PAN_proxy + HONO_proxy + SAPRC_proxy")),  
                            data = train)
                            #importance = TRUE)  
   
@@ -229,7 +232,8 @@ rf_result <- function(target) {
   rf_result_df[[target]] <<- predictions
 
   # Evaluate model performance for multiple targets
-  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  mse <- mean((predictions - test_y)^2)
   # return (mse)
   
   rmse <- sqrt(mse)
@@ -237,7 +241,8 @@ rf_result <- function(target) {
   # return (rmse)
   
   # Normalize MSE by the mean of the actual values
-  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y[[target]])
+  target_mean <- mean(test_y)
   mse_normalized <- rmse / target_mean
   
   return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
@@ -317,8 +322,6 @@ fviz_cluster(results, data = df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], geom = "p
 ## no meaning for now (for both month included or excluded)
 
 ##________________________________________________________________ AQI
-
-
 
 df$AQI_Category <- as.factor(df$AQI_Category)  # Ensure it's a factor
 
@@ -685,4 +688,12 @@ rf_result_df = rf_result_df %>%
   mutate(AQI_Category = sapply(AQI, categorize_AQI))
 
 sum(df[-trainIndex,17] == rf_result_df$AQI_Category) / nrow(rf_result_df)
-# 0.5758547 which is much worse than just classification
+# 0.5758547 accuracy which is much worse than just classification
+
+###======================================== combine SAPRC_data.csv
+df_SAPRC = read.csv("4. SARIMAX + SAPRC/SAPRC_data.csv")
+df$PAN_proxy = df_SAPRC$PAN_proxy
+df$HONO_proxy = df_SAPRC$HONO_proxy
+df$SAPRC_proxy = df_SAPRC$SAPRC_proxy
+
+### NO2 using SAPRC: 13.99655, 0.1298333 which is the best for NO2.
