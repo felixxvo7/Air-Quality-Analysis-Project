@@ -218,13 +218,16 @@ library(randomForest)
 
 # test <- cbind(test_x, test_y)
 
+rf_result_df = list()
+
 rf_result <- function(target) {
   rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3. + T + RH + AH + month")),  
                            data = train)
                            #importance = TRUE)  
   
   predictions <- predict(rf_model, test_x)
-  
+  rf_result_df[[target]] <<- predictions
+
   # Evaluate model performance for multiple targets
   mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
   # return (mse)
@@ -245,6 +248,8 @@ rf_rmse_CO <- rf_result("CO.GT.")        # 0.5778774   # 0.2807137
 rf_rmse_C6H6 <- rf_result("C6H6.GT.")    # 3.601207    # 0.3714302
 rf_rmse_NOx <- rf_result("NOx.GT.")      # 75.71713    # 0.3230885
 rf_rmse_NO2 <- rf_result("NO2.GT.")      # 21.05513    # 0.1953094
+
+rf_result_df <- as.data.frame(rf_result_df)
 
 # Display MSE for each target
 rf_rmse_CO       # 0.4806054 0.2334622
@@ -480,3 +485,204 @@ p3 <- ggplot(prop_by_predicted, aes(x = Actual, y = Predicted, fill = Proportion
 # grid.arrange(p1, p2, p3, nrow = 3)
 
 ################ RF is clearly better (best for Unhealthy and UnhealthyFSG with 79% and 74%). Make sense as those are the majorities of the dataset.
+
+### Lasso
+library(glmnet)
+fit_lasso <- glmnet(train_x, train_y[,1])
+# Note: The x-axis is on the log scale
+plot(fit_lasso, xvar = "lambda", main = "CO.GT.")
+legend("topleft", legend = colnames(test_x), col = 1:9, lty = 1, cex = 0.5)
+
+lasso_coefs <- coef(fit_lasso, s = exp(-6))  # or choose a specific lambda
+
+# Print the coefficients
+print(lasso_coefs) # PT08.S2.NMHC. contribute the most
+
+cor(df$CO.GT., df$PT08.S2.NMHC.)  # 0.8600162
+cor(df$CO.GT., df$PT08.S5.O3.)    # 0.8253229
+cor(df$CO.GT., df$PT08.S3.NOx.)   # -0.688505
+cor(df$CO.GT., df$PT08.S1.CO.)    # 0.8270612
+cor(df$CO.GT., df$month)          # 0.08992948
+
+
+##### Test if PCA reduces rmse
+# Perform PCA
+pca_result <- prcomp(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], center = TRUE, scale = TRUE)
+prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+round(prcomp_proportionVariate, 5)
+sum(prcomp_proportionVariate[1:3])
+# choose 3 pcs = 85.66% variations of training set and 1/3 less features
+# Extract first 3 PCs
+pca_train <- data.frame(pca_result$x[trainIndex, 1:3])  
+colnames(pca_train) <- c("PC1", "PC2", "PC3")  # Rename for clarity
+# pca_train$target <- df[trainIndex, target]  # Add target variable
+
+pca_test <- data.frame(pca_result$x[-trainIndex, 1:3])
+colnames(pca_test) <- c("PC1", "PC2", "PC3")
+
+library(randomForest)
+
+rf_result <- function(target) {
+  # Ensure target is in the training data
+  pca_train$target <- df[trainIndex, target]
+  
+  # Train the model
+  rf_model <- randomForest(target ~ PC1 + PC2 + PC3, data = pca_train)
+  
+  # Predictions
+  predictions <- predict(rf_model, pca_test)
+  
+  # Compute RMSE
+  mse <- mean((predictions - test_y[[target]])^2)
+  rmse <- sqrt(mse)
+  
+  # Normalize MSE
+  target_mean <- mean(test_y[[target]])
+  mse_normalized <- rmse / target_mean
+  
+  return(list(rmse = rmse, mse_normalized = mse_normalized))
+}
+
+# Example usage for one target variable:
+rf_rmse_CO <- rf_result("CO.GT.")        # 0.5778774   # 0.2807137
+rf_rmse_C6H6 <- rf_result("C6H6.GT.")    # 3.601207    # 0.3714302
+rf_rmse_NOx <- rf_result("NOx.GT.")      # 75.71713    # 0.3230885
+rf_rmse_NO2 <- rf_result("NO2.GT.")      # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rf_rmse_CO       # 0.4806054 0.2334622
+rf_rmse_C6H6     # 2.900826  0.2991926
+rf_rmse_NOx      # 67.9865   0.2901015
+rf_rmse_NO2      # 20.07209  0.1861906
+
+# > rf_rmse_CO       # 0.4806054 0.2334622
+# [1] 0.5741969
+# [1] 0.2789259
+# > rf_rmse_C6H6     # 2.900826  0.2991926
+# [1] 2.797983
+# [1] 0.2885854
+# > rf_rmse_NOx      # 67.9865   0.2901015
+# [1] 96.026
+# [1] 0.4097474
+# > rf_rmse_NO2      # 20.07209  0.1861906
+# [1] 23.03381
+# [1] 0.2136639
+
+# rmse is worse for RF
+
+### try for knn
+
+knn_result <- function(target) {
+  # Train kNN regression model
+  knn_fit <- knn.reg(train = pca_train,
+                     test = pca_test,
+                     # y = train_y,
+                     y = train_y[[target]],
+                     k = 10)  # k = 5 nearest neighbors
+  
+  # Predictions
+  predictions <- knn_fit$pred
+  
+  # Evaluate model performance for multiple targets
+  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y)^2)
+  # return (mse)
+  
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
+  # Normalize MSE by the mean of the actual values
+  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y)
+  
+  mse_normalized <- rmse / target_mean
+  
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
+}
+
+rmse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.5778774   # 0.2807137
+rmse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 3.601207    # 0.3714302
+rmse_NOx <- knn_result("NOx.GT.") # 5837.382       # 75.71713    # 0.3230885
+rmse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rmse_CO
+rmse_C6H6
+rmse_NOx  # 0.4296827
+rmse_NO2  # 0.2237448
+
+### worse than RF, and worst than knn without PCA. Direction failed.
+
+###### regression to classification
+
+###======================================================== AQI function
+# Define AQI breakpoints as a data frame
+aqi_breakpoints = data.frame(
+  Category = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"),
+  APLo = c(0, 51, 101, 151, 201, 301),
+  APHi = c(50, 100, 150, 200, 300, 500),
+  CO_Lo = c(0, 4.4, 9.4, 12.4, 15.4, 30.4),
+  CO_Hi = c(4.4, 9.4, 12.4, 15.4, 30.4, 50.4),
+  NOx_Lo = c(0, 53, 100, 360, 649, 1249),
+  NOx_Hi = c(53, 100, 360, 649, 1249, 2049),
+  NO2_Lo = c(0, 53, 100, 360, 649, 1249),
+  NO2_Hi = c(53, 100, 360, 649, 1249, 2049),
+  C6H6_Lo = c(0, 3, 7, 10, 15, 20),
+  C6H6_Hi = c(3, 7, 10, 15, 20, 30)
+)
+
+# Function to compute AQI for a given pollutant
+compute_AQI = function(CP, BPLo, BPHi, APLo, APHi) {
+  AQI = ((APHi - APLo) / (BPHi - BPLo)) * (CP - BPLo) + APLo
+  return(AQI)
+}
+
+# Function to get AQI for a given pollutant
+get_AQI = function(CP, pollutant) {
+  for (i in 1:nrow(aqi_breakpoints)) {
+    if (CP >= aqi_breakpoints[[paste0(pollutant, "_Lo")]][i] && CP < aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]) {
+      BPLo = aqi_breakpoints[[paste0(pollutant, "_Lo")]][i]
+      BPHi = aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]
+      APLo = aqi_breakpoints$APLo[i]
+      APHi = aqi_breakpoints$APHi[i]
+      return(compute_AQI(CP, BPLo, BPHi, APLo, APHi))
+    }
+  }
+  return(NA)  # Return NA if value is outside the defined range
+}
+
+calculate_rolling = function(x, window, FUN = mean) {
+  zoo::rollapplyr(x, width = window, FUN = FUN, fill = NA, partial = TRUE)
+}
+
+rf_result_df = rf_result_df %>%
+  mutate(
+    CO_8h_avg = calculate_rolling(CO.GT., 8),
+    C6H6_24h_avg = calculate_rolling(C6H6.GT., 24)
+  )
+
+# Apply AQI function to each row in dataset
+rf_result_df = rf_result_df %>%
+  mutate(
+    AQI_CO = sapply(CO_8h_avg, get_AQI, pollutant = "CO"),
+    AQI_C6H6 = sapply(C6H6_24h_avg, get_AQI, pollutant = "C6H6"),
+    AQI_NOx = sapply(NOx.GT., get_AQI, pollutant = "NOx"),
+    AQI_NO2 = sapply(NO2.GT., get_AQI, pollutant = "NO2")
+    
+  ) %>%
+  mutate(AQI = pmax(AQI_CO, AQI_C6H6, AQI_NOx, AQI_NO2, na.rm = TRUE),
+         Dominant_Pollutant = case_when(
+           AQI_CO == AQI  ~ "CO",
+           AQI_C6H6 == AQI ~ "C6H6",
+           AQI_NOx == AQI ~ "NOx",
+           AQI_NO2 == AQI ~ "NO2",
+           TRUE ~ "Other"
+         )
+  )
+
+rf_result_df = rf_result_df %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI))
+
+sum(df[-trainIndex,17] == rf_result_df$AQI_Category) / nrow(rf_result_df)
+# 0.5758547 which is much worse than just classification
