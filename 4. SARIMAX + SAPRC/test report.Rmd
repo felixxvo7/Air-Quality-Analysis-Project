@@ -1,77 +1,10 @@
----
----
----
 
-# Hybrid Time Series Forecasting of NO₂ Using SARIMAX and SAPRC Simulation Proxies
 
-## Introduction
+# Preprocessing
 
-Forecasting NO₂ (nitrogen dioxide) concentrations is essential for understanding air quality and predicting pollution. This report presents a hybrid forecasting model that combines SARIMAX (Seasonal AutoRegressive Integrated Moving Average with Exogenous Variables) with variables derived from the SAPRC (Statewide Air Pollution Research Center) chemical mechanism. The approach incorporates time series components and domain-specific chemical proxies to enhance predictive performance.
+## Formating
+The air quality data was initially cleaned by removing empty rows and columns, and by converting character columns—where commas were used as decimal points—into proper numeric format. The Date column was also converted from string format to a proper date type.
 
-## 1. Data Preprocessing and Stationarity
+To handle missing data, we first identified gaps using the is.na() and summary() functions. Since -200 was used as a placeholder for missing values, it was temporarily replaced with 0 to allow for five-number summary analysis and help determine which variables were most affected. During this process, we observed that the median value of NMHC_GT is 0, indicating that this variable may contain a large number of zero values, which could impact interpretation and imputation strategies.
 
-We performed data cleaning and merged date and time to create a proper datetime index. The Augmented Dickey-Fuller (ADF) test was applied to assess stationarity in the NO₂ series. Results p-value approximately 0.01 reject the null and accept that the NO₂ series is stationaryy, prompting the application of seasonal differencing with a frequency of 168 (24 hours × 7 days) to capture weekly cycles.
-
-![](images/NO2%20Time%20Series.png)
-
-## 2. Exploratory Data Analysis (EDA)
-
-Exploratory analysis involved plotting scatter relationships between NO₂ and key variables such as NOx, CO, C6H6, and O₃. These visualizations helped identify strong positive correlations, especially between NO₂ and NOx.
-
-![](images/Scatter%20Plots%20for%20key%20relationships.png)
-
-![](images/Seasonal%20Decomposition%20of%20NO2%20Time%20Series.png)
-
-This STL decomposition plot clearly breaks the NO₂ time series into its components:
-
-Trend: The second panel shows a smooth, long-term movement in NO₂ levels, with some dips and rises over time, indicating varying pollution levels across weeks.
-
-Seasonal: The third panel displays a strong and consistent repeating pattern, confirming weekly seasonality—likely due to differences in activity between weekdays and weekends.
-
-Remainder: The bottom panel captures irregular variations not explained by the trend or seasonality—essentially, short-term noise.
-
-STL decomposition confirmed strong seasonal patterns, and monthly trend plots indicated peaks in colder months. This plot of monthly average NO₂ levels shows a clear seasonal trend, with noticeably higher concentrations during the colder months—particularly in winter (Jan–Feb 2005). Levels dip in the summer months, likely due to reduced emissions and better atmospheric dispersion. This supports the earlier STL findings and emphasizes the role of seasonal environmental and human activity patterns in NO₂ variation.\
-![](images/Monthly%20Average%20NO2%20Levels.png)\
-
-## 3. Time-series modeling : ARIMA, SARIMA, SARIMAX
-
-ARIMA models are used for non-seasonal time series forecasting, combining autoregression (AR), integration (I), and moving average (MA) components. SARIMA extends ARIMA by including seasonal terms to capture repeating patterns in the data. SARIMAX further enhances SARIMA by allowing the inclusion of exogenous variables, making it suitable for environmental applications where other factors (like temperature, humidity, and pollutant levels) influence the main variable of interest.
-
-### SARIMAX Baseline Modeling
-
-The baseline SARIMAX model was developed using CO, NOx, O₃, T, and RH as exogenous variables. We used auto.arima to select the optimal model parameters. The model performed adequately, capturing general trends with an RMSE of 24.26. However, it struggled with extreme peaks and dips.
-
-![](images/Pure%20SARIMAX%20Forecast%20vs%20Actual%20in%20NO2.png)
-
-![](images/ARIMA(0,0,0)%20Pure%20SARIMAX.png)
-
-### Hybrid Modeling with SAPRC Proxy Variables
-
-#### Simulating SAPRC using modeling:
-
-Peroxyacetyl Nitrate (PAN) Approximation (Using **Polynomial Regression** for C6H6):
-
-$$
-PAN_{proxy} = a \times NOx + b\times NOx^2 + c \times C6H6 + d\times C6H6^2 + e \times O_3 + f \times T
-$$
-
-Nitrous Acid (HONO) Approximation:
-
-$$
-HONO_{proxy} = f \times NOx + g \times RH + h \times (NOx\times Rh) + i \times T + j  \times(NO_x\times T)
-$$
-
-SAPRC Proxy Approximation:\
-$$
-SAPRC_{proxy} = k \times NOx+ p \times O_3 + q \times T + r \times RH
-$$
-
-#### Hybrid SARIMAX with SAPRC:
-
-SAPRC-related chemical variables such as PAN, HONO, and complex chemical pathways were approximated using regression techniques. A full hybrid model was developed using exogenous variables with SAPRC proxies. This model yielded the best performance with an RMSE of 21.73, a significant improvement over both the baseline and proxy-only models.
-
-![](images/Hybrid%20SARIMAX%20Forecast%20with%20Proxy%20Variables%20vs%20Actual%20NO2.png) ![](images/ARIMA(0,0,0)%20for%20Full%20Hybrid%20SARIMAX.png)
-
-### Residual Analysis
-
-Residuals from both models were analyzed to assess model fit. The full hybrid model showed tighter residual distribution and less variance. Scatter plots and density plots confirmed better performance and error control compared to the proxy-only model.
+After examining the data's summary statistics and missingness patterns, we found that some variables exhibit Missing Not At Random (MNAR) behavior, while others are Missing At Random (MAR). Imputation was then applied based on variable type: for time-series columns such as T, RH, and AH, we used multiple imputation methods including forward fill, backward fill, and interpolation. For correlated sensor variables, we applied KNN imputation, as these features included both continuous and categorical data. The improvements from cleaning and imputing were evident upon reviewing the updated five-number summaries.

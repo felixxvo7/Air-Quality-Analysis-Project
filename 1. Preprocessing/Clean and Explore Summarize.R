@@ -86,3 +86,7 @@ for (col in names(numeric_data)) {
           col = "lightgreen", horizontal = TRUE)
 }
 
+df[df == -200] <- 0
+summary(df[,-c(1,2)])
+
+
