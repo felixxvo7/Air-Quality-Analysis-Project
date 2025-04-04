@@ -36,7 +36,6 @@ The **UCI Air Quality dataset** provides a comprehensive record of pollution lev
 
 This analysis is structured into four key components: **sensor calibration and air quality assessment**, which evaluates the correlation between sensor readings and true pollutant concentrations while detecting cross-sensitivities and analyzing seasonal AQI variations; **regression-based CO prediction**, which aims to develop models for estimating CO levels based on sensor and environmental data; **time series and hybrid modeling**, which explores temporal trends and advanced modeling techniques for pollutant forecasting; and **machine learning comparison**, which assesses different algorithms to determine the most effective approaches for air quality prediction and monitoring.
 
-
 # Preprocessing
 
 ## Formating
@@ -92,9 +91,9 @@ Given the non-normal distributions and the presence of extreme values, we utiliz
 
 ### Sensor-Pollutant Relationships:
 
-![](./images/corr_heatmap.png){width="512"}
+![](./images/corr_heatmap.png){width="479"}
 
-![](./images/pollutant_vs_sensor_environment.png)
+![](./images/pollutant_vs_sensor_environment.png){width="618"}
 
 **Figure 2**: The Correlation Heatmap reveals: The relationships between pollutants and sensors show a strong positive correlation for `CO` and `Sensor CO` ($\rho$ = 0.85) and a strong negative correlation for $NO_x$ and `Sensor NOx` ($\rho$ = -0.77), while `NO2` and `Sensor NO2` have a weak correlation ($\rho$ = 0.21). Pollutants exhibit weak or no correlation with environmental factors ($\rho$ $\in$ (-0.35, 0.28)). However, cross-sensitivity detection suggests potential sensor interference, as `CO` correlates highly with `Sensor NOx, NMHC, and O3`, $NO_x$ and `NO2` show moderate correlation with `Sensor CO, NMHC, and O3`, and $C_6H_6$ has high correlation with `Sensor NMHC` and moderate correlation with other sensors.
 
