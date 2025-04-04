@@ -1,17 +1,41 @@
 ---
-title: "Final Report: Air Quality"
+title: |
+  |
+  |
+  |
+  |
+  | \Huge \textbf{UCI Air Quality Analysis in Rome}
+  | \textbf{(March 2004 - April 2005)}
+subtitle: |
+  |
+  | \LARGE Final Report
+  |
+  | Data 2010: Tools and Techniques for Data Science
+  |
+  | \Large Professor: Ruwani Rasanjali Herath Mudiyanselage
+  | 
+date: "`r format(Sys.time(), '%d %B %Y')`"
+author: |
+  | \Large Felix Vo (7924848)
+  | \Large Duc Do (8005501)
+  | \Large Thuan Khang Dinh (8003655)
+  | \Large Parth Ashvinbhai Pansara (7937067)
 output:
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+\pagebreak
+
 # Introduction:
 
-The **UCI Air Quality dataset** provides a comprehensive record of pollution levels in Rome, Italy, capturing hourly measurements of key pollutants—including Carbon Monoxide ($CO$), Nitrogen Dioxide ($NO_2$), Total Nitrogen Oxides ($NO_x$), Benzene ($C_6H_6$), and Non-Methane Hydrocarbons ($NMHC$)—alongside sensor responses and environmental variables such as temperature and humidity. This dataset offers a unique opportunity to analyze sensor performance, assess air quality trends, and develop predictive models for pollutant concentrations. This analysis is structured into four key components: **sensor calibration and air quality assessment**, which evaluates the correlation between sensor readings and true pollutant concentrations while detecting cross-sensitivities and analyzing seasonal AQI variations; **regression-based CO prediction**, which aims to develop models for estimating CO levels based on sensor and environmental data; **time series and hybrid modeling**, which explores temporal trends and advanced modeling techniques for pollutant forecasting; and **machine learning comparison**, which assesses different algorithms to determine the most effective approaches for air quality prediction and monitoring.
+The **UCI Air Quality dataset** provides a comprehensive record of pollution levels in Rome, Italy, capturing hourly measurements of key pollutants—including Carbon Monoxide ($CO$), Nitrogen Dioxide ($NO_2$), Total Nitrogen Oxides ($NO_x$), Benzene ($C_6H_6$), and Non-Methane Hydrocarbons ($NMHC$)—alongside sensor responses and environmental variables such as temperature and humidity. This dataset offers a unique opportunity to analyze sensor performance, assess air quality trends, and develop predictive models for pollutant concentrations.
+
+This analysis is structured into four key components: **sensor calibration and air quality assessment**, which evaluates the correlation between sensor readings and true pollutant concentrations while detecting cross-sensitivities and analyzing seasonal AQI variations; **regression-based CO prediction**, which aims to develop models for estimating CO levels based on sensor and environmental data; **time series and hybrid modeling**, which explores temporal trends and advanced modeling techniques for pollutant forecasting; and **machine learning comparison**, which assesses different algorithms to determine the most effective approaches for air quality prediction and monitoring.
+
 
 # Preprocessing
 
@@ -20,13 +44,12 @@ The **UCI Air Quality dataset** provides a comprehensive record of pollution lev
 The air quality data was initially cleaned by removing empty rows and columns, and by converting character columns—where commas were used as decimal points—into proper numeric format. The Date column was also converted from string format to a proper date type.
 
 | CO.GT. | NMHC.GT. | C6H6.GT. | NOx.GT. | NO2.GT. | T   | RH  | AH  |
-|--------|----------|----------|---------|--------|-----|-----|-----|
-| 1683   | 8443     | 366      | 1639    | 1642   | 366 | 366 | 366 |
+|--------|----------|----------|---------|---------|-----|-----|-----|
+| 1683   | 8443     | 366      | 1639    | 1642    | 366 | 366 | 366 |
 
 | PT08.S1.CO. | PT08.S2.NMHC. | PT08.S3.NOx. | PT08.S4.NO2. | PT08.S5.O3. |
-|-------------|----------------|---------------|----------------|--------------|
-| 366         | 366            | 366           | 366            | 366          |
-
+|-------------|---------------|--------------|--------------|-------------|
+| 366         | 366           | 366          | 366          | 366         |
 
 | Number of missing data | n    |
 |------------------------|------|
@@ -49,7 +72,7 @@ After examining the data's summary statistics and missingness patterns, we found
 
 ![](images/summary_clean.png)
 
-# Correlation and AQI
+# Cor
 
 ## 1. Data Characteristics and Correlation Analysis
 
@@ -59,7 +82,7 @@ After examining the data's summary statistics and missingness patterns, we found
 
 ![](images/pollutants_dist_outlier.png)
 
-**Figure 1**: The Histograms reveal right-skewed distributions for all pollutants. This non-normality motivates the use of **non-parametric correlation measures**. Additionally, boxplots highlight the presence of significant outliers across all pollutants. The consistent pattern of **median concentrations being lower than the means** confirms the positive skewness of the data.
+**Figure 1**: The Histograms reveal right-skewed distributions for all pollutants. This non-normality motivates the use of **non-parametric correlation measures**. Additionally, boximages highlight the presence of significant outliers across all pollutants. The consistent pattern of **median concentrations being lower than the means** confirms the positive skewness of the data.
 
 ### 1.2 Correlation Matrix Interpretation
 
@@ -69,9 +92,9 @@ Given the non-normal distributions and the presence of extreme values, we utiliz
 
 ### Sensor-Pollutant Relationships:
 
-![](images/corr_heatmap.png){width="512"}
+![](./images/corr_heatmap.png){width="512"}
 
-![](images/pollutant_vs_sensor_environment.png)
+![](./images/pollutant_vs_sensor_environment.png)
 
 **Figure 2**: The Correlation Heatmap reveals: The relationships between pollutants and sensors show a strong positive correlation for `CO` and `Sensor CO` ($\rho$ = 0.85) and a strong negative correlation for $NO_x$ and `Sensor NOx` ($\rho$ = -0.77), while `NO2` and `Sensor NO2` have a weak correlation ($\rho$ = 0.21). Pollutants exhibit weak or no correlation with environmental factors ($\rho$ $\in$ (-0.35, 0.28)). However, cross-sensitivity detection suggests potential sensor interference, as `CO` correlates highly with `Sensor NOx, NMHC, and O3`, $NO_x$ and `NO2` show moderate correlation with `Sensor CO, NMHC, and O3`, and $C_6H_6$ has high correlation with `Sensor NMHC` and moderate correlation with other sensors.
 
@@ -124,13 +147,13 @@ where:
 
 ### 2.3 Temporal AQI Patterns
 
-![](images/AQI_trend.png)
+![](./images/AQI_trend.png)
 
 **Figure 3**: The AQI trend shows significant fluctuations, frequently exceeding the `Unhealthy for Sensitive Groups` and `Unhealthy` thresholds, with occasional peaks reaching `Very Unhealthy` levels. The highest peaks, reaching `Hazardous` range, are observed during late 2004. A sharp rise in AQI during Winter suggests increased pollution, likely due to heightened combustion activities, while Summer peaks align with high benzene ($C_6H_6$) contributions. Early 2005 shows a slight decline in AQI, though persistent fluctuations suggest evolving emission patterns and seasonal influences on air quality.
 
 ### 2.4 Pollutant-Specific Contributions
 
-![](images/AQI_trend_colored.png)
+![](./images/AQI_trend_colored.png)
 
 | Season       | Primary Pollutant | Contribution |
 |--------------|-------------------|-------------:|
@@ -144,7 +167,6 @@ where:
 
 ## 4. Seasonal Variation Analysis
 
-![](images/AQI_category_seasonal.png)
+![](./images/AQI_category_seasonal.png)
 
 **Figure 5**: The AQI category distribution varies by season, showing a shift from moderate air quality in Spring (Mar–May 2004) to worsening conditions in Summer (Jun–Aug 2004) and Fall (Sep–Nov 2004), where "Unhealthy" and "Very Unhealthy" categories dominate, with a small proportion reaching "Hazardous" levels. Winter (Dec–Feb 2004) continues to have high pollution, with a majority in the "Unhealthy for Sensitive Groups" and "Unhealthy" categories, while early Spring (Mar–Apr 2005) shows slight improvement with a higher proportion of moderate air quality. This seasonal pattern suggests increased pollution in Fall and Winter, likely due to combustion-related emissions, while air quality improves slightly in transitional periods.
-

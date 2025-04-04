@@ -1,5 +1,5 @@
 
-AirQualityUCI.csv <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/project Data/data/formated_data.csv")
+AirQualityUCI.csv <- read_csv("Documents/GitHub/Air-Quality-Analysis-Project/Datasets/formated_data.csv")
 sum(is.na(AirQualityUCI.csv))
 
 sum(is.na(AirQualityUCI.csv[9470,]))
@@ -38,7 +38,7 @@ str(filtered_data)
 
 # 4. Filter rows containing -200 in any column
 rows_with_minus200 <- filtered_data[rowSums(filtered_data == -200, na.rm = TRUE) > 0, ]
-minus200_counts <- colSums(filtered_data == -200, na.rm = TRUE)
+minus200_counts <- colSums(filtered_data[, -c(1,2)] == -200, na.rm = TRUE)
 print(rows_with_minus200)
 print(minus200_counts)
 
@@ -51,7 +51,7 @@ filtered_data %>%
   tally()  
 
 ###############__________________________________________________________________________________________________________#########
-AirQualityUCI.csv <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/project Data/data/formated_data.csv")
+AirQualityUCI.csv <- read_csv("Documents/GitHub/Air-Quality-Analysis-Project/Datasets/final_cleaned_data.csv")
 
 
 # Select numeric columns only
