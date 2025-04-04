@@ -1,0 +1,26 @@
+# References
+
+1. [Seasonality Detection in Time Series Data](https://www.geeksforgeeks.org/seasonality-detection-in-time-series-data/?ref=ml_lbp), GeeksforGeeks.
+
+2. [Time Series Analysis: Methods, Applications, and Best Practices](https://builtin.com/data-science/time-series-model), Built In.
+
+3. [A Complete Tutorial on Time Series Modeling in Python](https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/), Analytics Vidhya.
+
+4. [Complete Guide to SARIMAX in Python](https://www.geeksforgeeks.org/complete-guide-to-sarimax-in-python/), GeeksforGeeks.
+
+5. [Seasonal Decomposition of Time Series by LOESS (STL)](https://www.geeksforgeeks.org/seasonal-decomposition-of-time-series-by-loess-stl/), GeeksforGeeks.
+
+6. Stutz, J., Alicke, B., Ackermann, R., Geyer, A., Wang, S., White, A. B., Williams, E. J., Spicer, C. W., & Fast, J. D. (2004). *Relative humidity dependence of HONO chemistry in urban areas.* Journal of Geophysical Research, 109, D03307. [https://doi.org/10.1029/2003JD004135](https://doi.org/10.1029/2003JD004135)
+
+7. Hanst, P. L. (1971). *Mechanism of Peroxyacetyl Nitrate Formation.* Journal of the Air Pollution Control Association, 21(5), 269–271. [https://doi.org/10.1080/00022470.1971.10469527](https://doi.org/10.1080/00022470.1971.10469527)
+
+8. Qureshi, F. (2010). *Peroxyacetyl Nitrates: Ozone in the cooling PAN.* Atmospheric Chemistry, Spring 2010.
+
+9. Carter, W. P. L. (1990). *A Detailed Mechanism for the Gas-Phase Atmospheric Reactions of Organic Compounds.* Atmospheric Environment, 24A, 481–518.
+
+10. Atkinson, R. (1990). *Gas-phase tropospheric chemistry of organic compounds: a review.* Atmospheric Environment, 24A, 1–41.
+
+11. Stockwell, W. R., Middleton, P., Chang, J. S., & Tang, X. (1990). *The Second Generation Regional Acid Deposition Model Chemical Mechanism for Regional Air Quality Modeling.* Journal of Geophysical Research, 95, 16343–16367.
+
+12. Carter, W. P. L., & Atkinson, R. (1989). *Computer modeling study of incremental hydrocarbon reactivity.* Environmental Science & Technology, 23(7), 864–880.
+

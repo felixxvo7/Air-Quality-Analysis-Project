@@ -1,0 +1,81 @@
+---
+title: "Regression-Based Prediction of CO(GT) Using Environmental and Sensor Data"
+output: html_document
+---
+
+## 1. Regression Modelling for CO Prediction
+
+#### Baseline Model
+
+In the Baseline Model, the RMSE was **1.416849**. This model simply predicts the mean CO(GT) for all instances without using any predictors. It serves as a basic reference point for evaluating other models.
+
+#### Single Variable Model (CO Sensor)
+
+When using a Single Variable Model with only the CO Sensor, the RMSE dropped to **0.7662274**. This shows a noticeable improvement compared to the baseline, indicating that the CO Sensor captures important information about CO(GT).
+
+#### Full Model (All Predictors)
+
+The Full Model, which uses all available environmental and sensor variables, achieved an even lower RMSE of **0.4108955**. This substantial reduction highlights that including multiple predictors further enhances model performance.
+
+| Model                       | RMSE      |
+|-----------------------------|-----------|
+| Baseline Model              | 1.416849  |
+| Single Variable (CO Sensor) | 0.7662274 |
+| Full Model (All Predictors) | 0.4108955 |
+
+Overall, the results demonstrate that while the CO Sensor alone offers significant predictive power, combining it with other environmental variables leads to even more accurate predictions of CO(GT).
+
+## 2. Impact of Including SensorCO in Linear Regression Models
+
+To assess the importance of sensor data, particularly the CO sensor (`PT08.S1.CO.`), we compared two Linear Regression models: one using only environmental variables (Temperature, Humidity, and Hour), and another that included the CO sensor reading as an additional predictor.
+
+### (d) Without CO Sensor
+
+The model using only Temperature, Humidity, and Hour achieved weak predictive ability. This suggests that environmental variables alone are insufficient to model CO(GT) accurately in a linear framework.
+
+### (e) With CO Sensor
+
+Adding the `SensorCO` variable dramatically improved the model's performance. This shows that the sensor input captures meaningful variance in the CO(GT) values, significantly boosting model accuracy.
+
+## 3. Introducing Random Forest Models: With and Without SensorCO
+
+### (f) Without SensorCO
+
+The baseline Random Forest model using only Temperature, Humidity, and Hour achieved modest performance.
+
+### (g) With SensorCO
+
+When the CO sensor (`SensorCO`) was added to the model, performance improved significantly.
+
+## 4. Evaluation and Model Comparison
+
+To further illustrate the performance differences between models, bar charts were generated for RMSE and R² values across all four main approaches: Baseline, Single Variable, Selected Variables, and All Variables.
+
+To determine the best approach for predicting CO(GT), we compared several models based on their use of environmental variables, sensor inputs, and modeling techniques (Linear Regression vs. Random Forest).
+# RMSE Comparison Table
+
+
+| Model                                  | RMSE      |
+|----------------------------------------|-----------|
+| Baseline Model                         | 1.416849  |
+| Single Variable (CO Sensor)            | 0.7662274 |
+| Full Linear Model (All Predictors)     | 0.4108955 |
+| Linear Regression (Without SensorCO)   | 1.304     |
+| Linear Regression (With SensorCO)      | 0.748     |
+| Random Forest (Without SensorCO)       | 1.087     |
+| Random Forest (With SensorCO)          | 0.595     |
+
+
+From the results, the Random Forest model with SensorCO clearly outperforms all other models across all evaluation metrics. It captures the non-linear relationships between the predictors and the target variable better than linear models, and the inclusion of SensorCO dramatically improves prediction accuracy.
+
+## 5. Diagnostic Analysis
+
+Residual analysis was conducted to evaluate whether the models exhibited any systematic biases or time-based error patterns.
+
+For the selected-variable model, residuals were plotted against the hour of the day, revealing no significant time-dependent trends or heteroscedasticity.
+
+Predicted versus actual plots for the Random Forest model showed a tight clustering around the 45-degree line, especially for low and mid-range CO values. This confirmed that the model was accurately predicting most values and only slightly underestimating extreme values, likely due to fewer observations in the higher range.
+
+## 6. Conclusion
+
+The full model achieves lower RMSE due to the inclusion of more predictors like NOx.GT. and C6H6.GT., which are highly correlated with CO. However, this comes with risks such as overfitting and reduced interpretability. In contrast, using just Temperature, Humidity, Hour, and SensorCO provides strong performance (R² = 0.83, RMSE = 0.60) with fewer variables. These inputs are easy to measure, making the model simpler, faster, and more practical. Overall, the selected-variable model strikes an ideal balance between accuracy and usability.
