@@ -1,3 +1,7 @@
+# Code Appendix
+
+Follow this Github link for code appendix. [Press link here](https://github.com/felixxvo7/Air-Quality-Analysis-Project/tree/main)
+
 # References
 
 ## Correlation and AQI
