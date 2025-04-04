@@ -1,10 +1,27 @@
 ## -----------------------------------------------------------------------------------------------------------
-data = read.csv("./final_cleaned_data.csv")
 # Load required libraries
 library(tidyverse)
 library(ggplot2)
 library(reshape2)
 library(gridExtra)
+
+data = read_csv("Documents/GitHub/Air-Quality-Analysis-Project/2. Correlations & Sensor Calibration/final_cleaned_data.csv")
+
+summary(data[,c(-1, -2)])
+
+## -----------------------------------------------------------------------------------------------------------
+# Hist for each pollutant
+par(mfrow=c(2,4))  # 2x2 layout for plots
+hist(data$CO.GT., main="CO Distribution", col="skyblue")
+hist(data$C6H6.GT., main="C6H6 Distribution", col="lightcoral")
+hist(data$NO2.GT., main="NO2 Distribution", col="lightgreen")
+hist(data$NOx.GT., main="NOx Distribution", col="gold")
+
+boxplot(data$CO.GT., main="CO Distribution", col="skyblue")
+boxplot(data$C6H6.GT., main="C6H6 Distribution", col="lightcoral")
+boxplot(data$NO2.GT., main="NO2 Distribution", col="lightgreen")
+boxplot(data$NOx.GT., main="NOx Distribution", col="gold")
+
 
 ## -----------------------------------------------------------------------------------------------------------
 # Box plots for each pollutant

@@ -1,8 +1,34 @@
-data = read.csv("./final_cleaned_data.csv")
 
-
+library(tidyverse)
 library(patchwork)
+library(ggplot2)
+library(infer)
 
+data = read_csv("Documents/GitHub/Air-Quality-Analysis-Project/2. Correlations & Sensor Calibration/final_cleaned_data.csv") 
+# Handle NAs and scale for numerical stability
+data_clean <- data %>%
+  drop_na(PT08.S1.CO., CO.GT.) %>%
+  mutate(
+    PT.CO.scale = scale(PT08.S1.CO.),
+    CO.scale = scale(CO.GT.)
+  )
+
+# Permutation test
+observed_stat <- data_clean %>% 
+  specify(PT.CO.scale ~ CO.scale) %>% 
+  calculate(stat = "correlation", method = "spearman")
+
+null_dist <- data_clean %>%
+  specify(PT.CO.scale ~ CO.scale) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "correlation", method = "spearman")
+
+# Continuity correction to avoid p=0
+p_value <- (sum(abs(null_dist$stat) >= abs(observed_stat$stat)) + 1) / (1000 + 1)
+
+## -----------------------------------------------------------------------------------------------------------
+set.seed(1)
 # Define matching pairs
 pairs = list(
   list(sensor = "PT08.S1.CO.", ref = "CO.GT."),
@@ -17,7 +43,7 @@ perm_test = function(x, y, n_perm = 1000) {
   r_obs = cor(x, y, method = "spearman")
   
   # Null distribution
-  r_perm = replicate(n_perm, cor(x, sample(y), method = "spearman"))
+  r_perm = replicate(n_perm, cor(sample(x), sample(y), method = "spearman",use = "pairwise.complete.obs"))
   
   # Empirical p-value (two-sided)
   p_val = mean(abs(r_perm) >= abs(r_obs))
@@ -67,4 +93,16 @@ full_plots <- lapply(1:length(pairs), function(i) {
 wrap_plots(full_plots, ncol = 2) +
   plot_annotation(title = "Sensor-Reference Relationships and Permutation Tests",
                   theme = theme(plot.title = element_text(hjust = 0.5, size = 14)))
+
+
+obs_statistic <- gss %>%
+  specify(age ~ partyid) %>%
+  calculate(stat = "F")
+# generate the null distribution with randomization
+null_dist <- gss %>%
+  specify(age ~ partyid) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>%
+  calculate(stat = "F")
+
 
