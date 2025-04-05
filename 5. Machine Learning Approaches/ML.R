@@ -68,13 +68,13 @@ library(tidyverse)
 df$month = as.integer(df$month)
 
 # Define predictors (exclude Date, Time, and targets)
-# predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
-predictors <- df %>% select(-c(Date, Time, NO2.GT., AQI, AQI_Category))
+predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
+# predictors <- df %>% select(-c(Date, Time, NO2.GT., AQI, AQI_Category))
 # predictors <- df %>% select(-c(Date, Time, NO2.GT.))
 
 # Define multiple target variables (CO, NOx, Benzene)
-# targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
-targets <- df %>% select(NO2.GT.)
+targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
+# targets <- df %>% select(NO2.GT.)
 
 # Normalize data (optional but recommended)
 
@@ -299,7 +299,7 @@ prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
 round(prcomp_proportionVariate, 5)
 
 # Plot
-plot(pca_result$x[, 1], pca_result$x[, 2], 
+PCA_month_plot = plot(pca_result$x[, 1], pca_result$x[, 2], 
      xlab = "PC1(53.42%)", ylab = "PC2(23.88%)", 
      col = months_colors, pch = 19, 
      main = "PCA dimension reduction")
@@ -316,7 +316,7 @@ library(factoextra)
 
 fviz_nbclust(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], kmeans, method = "silhouette")
 
-results <- kmeans(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], centers = 2)
+results <- kmeans(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], centers = 6)
 fviz_cluster(results, data = df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], geom = "point")
 
 ## no meaning for now (for both month included or excluded)
