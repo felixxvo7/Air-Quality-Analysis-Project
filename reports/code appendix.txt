@@ -1,0 +1,2240 @@
+
+AirQualityUCI.csv <- read_csv("Documents/GitHub/Air-Quality-Analysis-Project/Datasets/formated_data.csv")
+sum(is.na(AirQualityUCI.csv))
+
+sum(is.na(AirQualityUCI.csv[9470,]))
+# Load dplyr
+library(dplyr)
+library(tidyverse)
+library(readr)
+
+# 1. Clean full NA rows and columns
+filtered_data <- AirQualityUCI.csv %>%
+  select(where(~ sum(is.na(.)) != 9471))%>%
+  filter(rowSums(is.na(AirQualityUCI.csv)) != 10)
+
+View(filtered_data)
+
+# 2. Convert columns char to numeric -> "," to "." 
+filtered_data[3:ncol(filtered_data)] <- lapply(
+  filtered_data[3:ncol(filtered_data)], 
+  function(x) as.numeric(gsub(",", ".", x))
+)
+View(filtered_data)
+
+# Find columns with at least one value between -200 and 0
+# filtered_data[filtered_data > -200 & filtered_data < 0]
+cols_with_negatives <- names(filtered_data)[sapply(filtered_data, function(x) {
+  any(x > -200 & x < 0, na.rm = TRUE)
+})]
+# Print the column  with negative beside -200
+print(cols_with_negatives)
+
+# 3. Convert "dd/mm/yyyy" to Date type
+filtered_data$Date <- as.Date(filtered_data$Date, format = "%d/%m/%Y")
+
+str(filtered_data)
+
+
+# 4. Filter rows containing -200 in any column
+rows_with_minus200 <- filtered_data[rowSums(filtered_data == -200, na.rm = TRUE) > 0, ]
+minus200_counts <- colSums(filtered_data[, -c(1,2)] == -200, na.rm = TRUE)
+print(rows_with_minus200)
+print(minus200_counts)
+
+# Frequency table of counts -200 by rows
+filtered_data %>%
+  mutate(
+    minus200_count = rowSums(across(where(is.numeric)) == -200, na.rm = TRUE)
+  ) %>%
+  group_by(minus200_count) %>%
+  tally()  
+
+###############__________________________________________________________________________________________________________#########
+AirQualityUCI.csv <- read_csv("Documents/GitHub/Air-Quality-Analysis-Project/Datasets/final_cleaned_data.csv")
+
+
+# Select numeric columns only
+numeric_data <- filtered_data %>% select(-Date) %>% select(-Time) 
+numeric_data <- numeric_data %>%
+                  mutate(across(where(is.numeric), ~ ifelse(.x == -200, NA, .x))) # Final safety check
+
+# Generate summary statistics
+summary_stats <- data.frame(
+  Variable = names(numeric_data),
+  Mean = sapply(numeric_data, mean, na.rm = TRUE),
+  Median = sapply(numeric_data, median, na.rm = TRUE),
+  SD = sapply(numeric_data, sd, na.rm = TRUE),
+  Min = sapply(numeric_data, min, na.rm = TRUE),
+  Max = sapply(numeric_data, max, na.rm = TRUE),
+  Q1 = sapply(numeric_data, quantile, probs = 0.25, na.rm = TRUE),
+  Q3 = sapply(numeric_data, quantile, probs = 0.75, na.rm = TRUE),
+  IQR = sapply(numeric_data, IQR, na.rm = TRUE),
+  NAs = sapply(numeric_data, function(x) sum(is.na(x)))
+)
+
+# Print formatted summary
+print("Summary Statistics of Air Quality Dataset:")
+print(summary_stats, row.names = FALSE)
+
+# Generate distribution plots
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+for (col in names(numeric_data)) {
+  hist(numeric_data[[col]], main = paste("Histogram of", col), 
+       xlab = col, col = "skyblue", breaks = 30)
+  boxplot(numeric_data[[col]], main = paste("Boxplot of", col), 
+          col = "lightgreen", horizontal = TRUE)
+}
+
+df[df == -200] <- 0
+summary(df[,-c(1,2)])
+
+## Air quality
+
+#### The dataset
+
+```{r}
+library(VIM)
+library(dplyr)
+library(zoo)
+
+df <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/formated_data.csv")
+data <- df
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+# Replace -200 with 0
+df[df == -200] <- 0
+summary(df)
+```
+
+
+```{r}
+medians <- apply(df,2,median,na.rm = TRUE)
+medians
+
+# Remove NMHC.GT. column
+df <- df %>% select(-NMHC.GT.)
+
+```
+**NMHC_GT median value is 0, that's make posibble if NMHC_GT value contains many 0 values**
+
+
+### Missing Value IS NOT at Random
+
+Time series data:
+    - Forward Fill
+    - Backward Fill
+    - Interpolation
+
+
+```{r}
+sensor_cols <- c("CO.GT.", "PT08.S1.CO.", "PT08.S2.NMHC.", "NOx.GT.", 
+                 "PT08.S3.NOx.", "NO2.GT.", "PT08.S4.NO2.", "PT08.S5.O3.")
+
+data <- data %>% select(-NMHC.GT.)
+data[data == -200] <- NA
+
+#Apply KNN Imputation for correlated sensor variables
+sensor_cols <- c("CO.GT.", "PT08.S1.CO.", "PT08.S2.NMHC.", "NOx.GT.", 
+                 "PT08.S3.NOx.", "NO2.GT.", "PT08.S4.NO2.", "PT08.S5.O3.")
+
+data_knn <- kNN(data, variable = sensor_cols, k = 5)
+data_knn <- data_knn[, 1:ncol(data)]
+
+#Handle time-series columns (T, RH, AH) using forward fill, backward fill, and interpolation
+data_knn <- data_knn %>%
+  mutate(
+    T = na.locf(T, na.rm = FALSE),  # Forward Fill (LOCF)
+    T = na.locf(T, fromLast = TRUE, na.rm = FALSE),  # Backward Fill (NOCB)
+    T = na.approx(T, na.rm = FALSE),  # Interpolation
+
+    RH = na.locf(RH, na.rm = FALSE),
+    RH = na.locf(RH, fromLast = TRUE, na.rm = FALSE),
+    RH = na.approx(RH, na.rm = FALSE),
+
+    AH = na.locf(AH, na.rm = FALSE),
+    AH = na.locf(AH, fromLast = TRUE, na.rm = FALSE),
+    AH = na.approx(AH, na.rm = FALSE)
+  )
+
+data_knn[is.na(data_knn)] <- 0
+
+write.csv(data_knn, "final_cleaned_data.csv", row.names = FALSE)
+summary(data_knn)
+```
+```{r}
+library(ggcorrplot)
+# Compute the correlation matrix
+data_numeric <- data %>% select(-Date, -Time)
+cor_matrix <- cor(data_numeric, use = "complete.obs")
+write.csv(cor_matrix, "cor_matrix.csv")
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+```
+
+# Load required libraries
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+
+data = read_csv("Documents/GitHub/Air-Quality-Analysis-Project/2. Correlations & Sensor Calibration/final_cleaned_data.csv")
+
+summary(data[,c(-1, -2)])
+
+## -----------------------------------------------------------------------------------------------------------
+# Hist for each pollutant
+par(mfrow=c(2,4))  # 2x2 layout for plots
+hist(data$CO.GT., main="CO Distribution", col="skyblue")
+hist(data$C6H6.GT., main="C6H6 Distribution", col="lightcoral")
+hist(data$NO2.GT., main="NO2 Distribution", col="lightgreen")
+hist(data$NOx.GT., main="NOx Distribution", col="gold")
+
+boxplot(data$CO.GT., main="CO Distribution", col="skyblue")
+boxplot(data$C6H6.GT., main="C6H6 Distribution", col="lightcoral")
+boxplot(data$NO2.GT., main="NO2 Distribution", col="lightgreen")
+boxplot(data$NOx.GT., main="NOx Distribution", col="gold")
+
+
+## -----------------------------------------------------------------------------------------------------------
+# Box plots for each pollutant
+p1 = ggplot(data, aes(y=CO.GT.)) + 
+  geom_boxplot(fill="skyblue") + 
+  theme_minimal() + 
+  ggtitle("Boxplot of CO (mg/m³)") + 
+  ylab("CO (mg/m³)")
+
+p2 = ggplot(data, aes(y=C6H6.GT.)) + 
+  geom_boxplot(fill="lightcoral") + 
+  theme_minimal() + 
+  ggtitle("Boxplot of Benzene (C6H6) (µg/m³)") + 
+  ylab("C6H6 (µg/m³)")
+
+p3 = ggplot(data, aes(y=NO2.GT.)) + 
+  geom_boxplot(fill="lightgreen") + 
+  theme_minimal() + 
+  ggtitle("Boxplot of NO2 (µg/m³)") + 
+  ylab("NO2 (µg/m³)")
+
+p4 = ggplot(data, aes(y=NOx.GT.)) + 
+  geom_boxplot(fill="gold") + 
+  theme_minimal() + 
+  ggtitle("Boxplot of NOx (ppb)") + 
+  ylab("NOx (ppb)")
+
+# Arrange the boxplots in a grid
+grid.arrange(p1, p2, p3, p4, ncol=2)
+
+## -----------------------------------------------------------------------------------------------------------
+# Compute Spearman correlation matrix
+cor_matrix = cor(data %>% select_if(is.numeric), method = "spearman", use = "complete.obs")
+cor_matrix
+
+# Convert to long format for visualization
+cor_data = melt(cor_matrix)
+
+# Heatmap visualization
+ggplot(cor_data, aes(Var2, Var1, fill = value)) +
+  geom_tile(color = "white") +  
+  geom_text(aes(label = round(value, 2)), color = "black", size = 4) + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Spearman\nCorrelation") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+#Reshape for heatmap
+heatmap_data = cor_matrix %>%
+  as.data.frame() %>%
+  rownames_to_column("True_Pollutant") %>%
+  filter(True_Pollutant %in% c("CO.GT.", "NOx.GT.", "NO2.GT.", "C6H6.GT.")) %>%
+  select(True_Pollutant, 
+         PT08.S1.CO., PT08.S3.NOx., PT08.S4.NO2., PT08.S2.NMHC., PT08.S5.O3.,
+         T, RH, AH) %>%
+  melt(id.vars = "True_Pollutant", 
+       variable.name = "Sensor_Env", 
+       value.name = "Correlation")
+
+# Create heatmap
+ggplot(heatmap_data, aes(x = Sensor_Env, y = True_Pollutant, fill = Correlation)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 3) +
+  scale_fill_gradient2(
+    low = "blue", mid = "white", high = "red",
+    midpoint = 0, limits = c(-1, 1),
+    name = "Correlation (ρ)"
+  ) +
+  labs(
+    title = "True Pollutants vs Sensor Response & Environment",
+    subtitle = "Spearman correlation coefficients",
+    x = "Sensors & Environmental Factors",
+    y = "Reference Measurements (Ground Truth)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid = element_blank()
+  )
+
+library(tidyverse)
+library(patchwork)
+library(ggplot2)
+library(infer)
+
+data = read_csv("Documents/GitHub/Air-Quality-Analysis-Project/2. Correlations & Sensor Calibration/final_cleaned_data.csv") 
+# Handle NAs and scale for numerical stability
+data_clean <- data %>%
+  drop_na(PT08.S1.CO., CO.GT.) %>%
+  mutate(
+    PT.CO.scale = scale(PT08.S1.CO.),
+    CO.scale = scale(CO.GT.)
+  )
+
+# Permutation test
+observed_stat <- data_clean %>% 
+  specify(PT.CO.scale ~ CO.scale) %>% 
+  calculate(stat = "correlation", method = "spearman")
+
+null_dist <- data_clean %>%
+  specify(PT.CO.scale ~ CO.scale) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "correlation", method = "spearman")
+
+# Continuity correction to avoid p=0
+p_value <- (sum(abs(null_dist$stat) >= abs(observed_stat$stat)) + 1) / (1000 + 1)
+
+## -----------------------------------------------------------------------------------------------------------
+set.seed(1)
+# Define matching pairs
+pairs = list(
+  list(sensor = "PT08.S1.CO.", ref = "CO.GT."),
+  list(sensor = "PT08.S3.NOx.", ref = "NOx.GT."),
+  list(sensor = "PT08.S4.NO2.", ref = "NO2.GT.")
+)
+
+# Permutation test function
+perm_test = function(x, y, n_perm = 1000) {
+  
+  # Observed correlation
+  r_obs = cor(x, y, method = "spearman")
+  
+  # Null distribution
+  r_perm = replicate(n_perm, cor(sample(x), sample(y), method = "spearman",use = "pairwise.complete.obs"))
+  
+  # Empirical p-value (two-sided)
+  p_val = mean(abs(r_perm) >= abs(r_obs))
+  
+  return(list(correlation = r_obs, p_value = p_val))
+}
+
+# Run the test for each pair
+results = lapply(pairs, function(pair) {
+  sensor = pair$sensor
+  ref = pair$ref
+  test_result = perm_test(data[[sensor]], data[[ref]])
+  data.frame(
+    Sensor = sensor,
+    Reference = ref,
+    Correlation = test_result$correlation,
+    P_Value = test_result$p_value
+  )
+})
+
+# Combine results
+final_results = do.call(rbind, results)
+final_results
+
+
+## -----------------------------------------------------------------------------------------------------------
+# Create scatterplots with correlation coefficients
+scatter_plots <- lapply(pairs, function(pair) {
+  sensor <- pair$sensor
+  ref <- pair$ref
+  
+  ggplot(data, aes(x = .data[[sensor]], y = .data[[ref]])) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", color = "red") +
+    labs(title = paste(sensor, "vs", ref),
+         x = sensor,
+         y = ref) +
+    theme_minimal()
+})
+
+# Combine with permutation plots
+full_plots <- lapply(1:length(pairs), function(i) {
+  scatter_plots[[i]] + results[[i]]$plot
+})
+
+# Display all plots
+wrap_plots(full_plots, ncol = 2) +
+  plot_annotation(title = "Sensor-Reference Relationships and Permutation Tests",
+                  theme = theme(plot.title = element_text(hjust = 0.5, size = 14)))
+
+
+obs_statistic <- gss %>%
+  specify(age ~ partyid) %>%
+  calculate(stat = "F")
+# generate the null distribution with randomization
+null_dist <- gss %>%
+  specify(age ~ partyid) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>%
+  calculate(stat = "F")
+
+
+library(zoo)
+library(tidyverse)
+library(ggplot2)
+library(infer)
+
+data = read_csv("Documents/GitHub/Air-Quality-Analysis-Project/2. Correlations & Sensor Calibration/final_cleaned_data.csv") %>%
+  mutate(Date = as.Date(Date)) %>%
+  mutate(Month = format(Date, "%m"),
+         Year = format(Date, "%Y"),
+         Season = case_when(
+           Month %in% c("12", "01", "02") ~ "Winter",
+           Month %in% c("03", "04", "05") ~ "Spring",
+           Month %in% c("06", "07", "08") ~ "Summer",
+           Month %in% c("09", "10", "11") ~ "Fall"
+           )
+  )
+
+# Define AQI breakpoints as a data frame
+aqi_breakpoints = data.frame(
+  Category = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"),
+  APLo = c(0, 51, 101, 151, 201, 301),
+  APHi = c(50, 100, 150, 200, 300, 500),
+  CO_Lo = c(0, 4.4, 9.4, 12.4, 15.4, 30.4),
+  CO_Hi = c(4.4, 9.4, 12.4, 15.4, 30.4, 50.4),
+  NOx_Lo = c(0, 53, 100, 360, 649, 1249),
+  NOx_Hi = c(53, 100, 360, 649, 1249, 2049),
+  NO2_Lo = c(0, 53, 100, 360, 649, 1249),
+  NO2_Hi = c(53, 100, 360, 649, 1249, 2049),
+  C6H6_Lo = c(0, 3, 7, 10, 15, 20),
+  C6H6_Hi = c(3, 7, 10, 15, 20, 30)
+)
+
+
+# Function to compute AQI for a given pollutant
+compute_AQI = function(CP, BPLo, BPHi, APLo, APHi) {
+  AQI = ((APHi - APLo) / (BPHi - BPLo)) * (CP - BPLo) + APLo
+  return(AQI)
+}
+
+# Function to get AQI for a given pollutant
+get_AQI = function(CP, pollutant) {
+  for (i in 1:nrow(aqi_breakpoints)) {
+    if (CP >= aqi_breakpoints[[paste0(pollutant, "_Lo")]][i] && CP < aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]) {
+      BPLo = aqi_breakpoints[[paste0(pollutant, "_Lo")]][i]
+      BPHi = aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]
+      APLo = aqi_breakpoints$APLo[i]
+      APHi = aqi_breakpoints$APHi[i]
+      return(compute_AQI(CP, BPLo, BPHi, APLo, APHi))
+    }
+  }
+  return(NA)  # Return NA if value is outside the defined range
+}
+
+calculate_rolling = function(x, window, FUN = mean) {
+  zoo::rollapplyr(x, width = window, FUN = FUN, fill = NA, partial = TRUE)
+}
+
+categorize_AQI = function(AQI) {
+  if (AQI <= 50) {
+    return("Good")
+  } else if (AQI <= 100) {
+    return("Moderate")
+  } else if (AQI <= 150) {
+    return("Unhealthy for Sensitive Groups")
+  } else if (AQI <= 200) {
+    return("Unhealthy")
+  } else if (AQI <= 300) {
+    return("Very Unhealthy")
+  } else {
+    return("Hazardous")
+  }
+}
+
+data = data %>%
+  mutate(
+    CO_8h_avg = calculate_rolling(CO.GT., 8),
+    C6H6_24h_avg = calculate_rolling(C6H6.GT., 24)
+  )
+
+# Apply AQI function to each row in dataset
+data = data %>%
+  mutate(
+    AQI_CO = sapply(CO_8h_avg, get_AQI, pollutant = "CO"),
+    AQI_C6H6 = sapply(C6H6_24h_avg, get_AQI, pollutant = "C6H6"),
+    AQI_NOx = sapply(NOx.GT., get_AQI, pollutant = "NOx"),
+    AQI_NO2 = sapply(NO2.GT., get_AQI, pollutant = "NO2")
+  ) %>%
+  mutate(AQI = pmax(AQI_CO, AQI_C6H6, AQI_NOx, AQI_NO2, na.rm = TRUE),
+         Dominant_Pollutant = case_when(
+            AQI_CO == AQI  ~ "CO",
+            AQI_C6H6 == AQI ~ "C6H6",
+            AQI_NOx == AQI ~ "NOx",
+            AQI_NO2 == AQI ~ "NO2",
+            TRUE ~ "Other"
+          ),
+         Category = sapply(AQI, categorize_AQI)
+  )
+
+table(data$Category)
+## ----------------------------------------------------------------------------------------------------------
+
+daily_dominant = data %>%
+  group_by(Date) %>%
+  summarise(
+    # Count hourly occurrences of each dominant pollutant
+    CO_hours = sum(Dominant_Pollutant == "CO", na.rm = TRUE),
+    C6H6_hours = sum(Dominant_Pollutant == "C6H6", na.rm = TRUE),
+    NOx_hours = sum(Dominant_Pollutant == "NOx", na.rm = TRUE),
+    NO2_hours = sum(Dominant_Pollutant == "NO2", na.rm = TRUE),
+    Total_hours = sum(!is.na(Dominant_Pollutant)),  # Total valid hours
+    
+    # Determine daily dominant (mode)
+    Dominant_Pollutant = names(which.max(c(
+      CO = CO_hours,
+      C6H6 = C6H6_hours,
+      NOx = NOx_hours,
+      NO2 = NO2_hours
+    ))),
+    
+    # Calculate dominant percentage
+    Dominant_Hours = max(CO_hours, C6H6_hours, NOx_hours, NO2_hours),
+    Dominant_Pct = Dominant_Hours / Total_hours * 100,
+    .groups = 'drop'
+  )
+
+## -----------------------------------------------------------------------------------------------------------
+
+ggplot(daily_dominant, aes(x = Date, y = Dominant_Pct, color = Dominant_Pollutant)) +
+  geom_point() +
+  geom_hline(yintercept = 50, linetype = "dashed") +
+  scale_color_manual(values = c("CO" = "#377eb8", "C6H6" = "#4daf4a", 
+                                "NOx" = "#ff7f00", "NO2" = "#e41a1c")) +
+  labs(title = "Daily Dominant Pollutant Consistency",
+       subtitle = "Percentage of hours the dominant pollutant was leading",
+       y = "% of Hours as Dominant") +
+  theme_minimal()
+## -----------------------------------------------------------------------------------------------------------
+
+aqi_trend = data %>%
+  group_by(Date, Season, Year) %>%
+  summarise(AQI_CO = mean(AQI_CO, na.rm=TRUE),
+            AQI_C6H6 = mean(AQI_C6H6, na.rm=TRUE),
+            AQI_NOx = mean(AQI_NOx, na.rm=TRUE),
+            AQI_NO2 = mean(AQI_NO2, na.rm=TRUE),
+            AQI = pmax(AQI_CO, AQI_C6H6, AQI_NOx, AQI_NO2, na.rm = TRUE)) %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI),
+         Month_Range = case_when(
+           Season == "Spring" & Year == 2004 ~ "Mar-May 2004", # Spring = Mar-May
+           Season == "Spring" & Year == 2005 ~ "Mar-Apr 2005",
+           Season == "Summer" ~ "Jun-Aug 2004",  # Summer = Jun-Aug
+           Season == "Fall"   ~ "Sep-Nov 2004",  # Fall = Sep-Nov
+           Season == "Winter" ~ "Dec-Feb 2004"    # Winter = Dec-Feb
+         )) %>%
+  left_join(daily_dominant, by = "Date") %>%
+  select(Date, Season, Month_Range, Year, 
+         AQI_CO, AQI_C6H6, AQI_NOx, AQI_NO2, AQI, AQI_Category,
+         Dominant_Pollutant, Dominant_Hours)
+## -----------------------------------------------------------------------------------------------------------
+ggplot(aqi_trend, aes(x = Date, y = AQI)) +
+  # Main trend line
+  geom_line(color = "blue") +
+  
+  # Category threshold lines (using APLo from your breakpoints)
+  geom_hline(
+    data = aqi_breakpoints,
+    aes(
+      yintercept = APLo,
+      color = factor(Category, 
+                     levels = c("Good", "Moderate", 
+                                "Unhealthy for Sensitive Groups",
+                                "Unhealthy", "Very Unhealthy", 
+                                "Hazardous")),
+      linetype = factor(Category, 
+                        levels = c("Good", "Moderate",
+                                   "Unhealthy for Sensitive Groups",
+                                   "Unhealthy", "Very Unhealthy",
+                                   "Hazardous"))
+    ),
+    alpha = 0.7,
+    linewidth = 0.5
+  ) +
+  
+  # EPA color scheme with ordered levels
+  scale_color_manual(
+    name = "AQI Category Thresholds",
+    values = c(
+      "Good" = "#00E400",
+      "Moderate" = "#FFFF00",
+      "Unhealthy for Sensitive Groups" = "#FF7E00",
+      "Unhealthy" = "#FF0000",
+      "Very Unhealthy" = "#8F3F97",
+      "Hazardous" = "#7E0023"
+    ),
+    breaks = c("Good", "Moderate", 
+               "Unhealthy for Sensitive Groups",
+               "Unhealthy", "Very Unhealthy",
+               "Hazardous")  # Explicit order for legend
+  ) +
+  
+  # Custom linetype scale to match
+  scale_linetype_manual(
+    name = "AQI Category Thresholds",
+    values = rep("dashed", 6),  
+    breaks = c("Good", "Moderate",
+               "Unhealthy for Sensitive Groups",
+               "Unhealthy", "Very Unhealthy",
+               "Hazardous")
+  ) +
+  
+  # Labels and theme
+  labs(
+    title = "AQI Trend with Category Thresholds",
+    x = "Date",
+    y = "AQI",
+    caption = "Horizontal lines show lower bounds of each AQI category"
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 350, by = 50),
+    limits = c(0, 350)
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    legend.key.width = unit(1.5, "cm")  # Wider legend keys for lines
+  ) +
+  guides(
+    color = guide_legend(order = 1),  # Ensures color legend comes first
+    linetype = guide_legend(order = 1)  # Matches color legend
+  )
+
+## -----------------------------------------------------------------------------------------------------------
+# Define exact seasonal periods (covering full dataset range)
+season_periods <- data.frame(
+  start = as.Date(c("2004-03-10", "2004-06-01", "2004-09-01", "2004-12-01", 
+                    "2005-03-01")),
+  end = as.Date(c("2004-05-31", "2004-08-31", "2004-11-30", "2005-02-28", 
+                  "2005-04-04")),
+  season = c("Spring", "Summer", "Fall", "Winter", "Spring")  
+)
+
+# Create the plot
+ggplot(aqi_trend) +
+  # 1. Add seasonal background shading
+  geom_rect(
+    data = season_periods,
+    aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf, fill = season),
+    alpha = 0.1
+  ) +
+  
+  # 2. AQI trend lines
+  geom_segment(
+    aes(x = Date, xend = lead(Date),
+        y = AQI, yend = lead(AQI),
+        color = Dominant_Pollutant)
+  ) +
+  
+  # 3. Vertical lines for season transitions
+  geom_vline(
+    data = season_periods[-1, ],  # Exclude first start date
+    aes(xintercept = start),
+    linetype = "dashed",
+    color = "gray30", 
+    size = 0.3,
+    alpha = 0.5
+  ) +
+  
+  # 4. Season labels
+  geom_text(
+    data = season_periods,
+    aes(x = start + (end - start)/2 + 3,
+        y = max(aqi_trend$AQI, na.rm = TRUE) * 1.05,
+        label = season),
+    size = 3.5, 
+    fontface = "bold",
+    color = "black",
+    show.legend = FALSE
+  ) +
+  
+  # 5. Color scales
+  scale_fill_manual(
+    values = c("Spring" = "#66c2a5", 
+               "Summer" = "#fc8d62",
+               "Fall" = "#8da0cb",
+               "Winter" = "#e78ac3"),
+    guide = "none"  # Hide fill legend
+  ) +
+  scale_color_manual(
+    values = c("CO" = "#377eb8", 
+               "C6H6" = "#4daf4a",
+               "NOx" = "#ff7f00", 
+               "NO2" = "#e41a1c"),
+    name = "Dominant Pollutant"
+  ) +
+  
+  # Adjust date axis
+  scale_x_date(
+    date_breaks = "1 month",
+    date_labels = "%b\n%Y",
+    limits = c(min(aqi_trend$Date), max(aqi_trend$Date))
+  ) +
+  
+  # Labels
+  labs(
+    title = "AQI Trend March 2004 - April 2005",
+    subtitle = "Colored by Dominant Pollutant and with Seasonal Transitions Vertical lines",
+    x = "Date",
+    y = "AQI"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold")
+  )
+## -----------------------------------------------------------------------------------------------------------
+
+seasonal_dominance = table(aqi_trend$Month_Range, aqi_trend$Dominant_Pollutant)
+row_percentages = round(prop.table(seasonal_dominance, margin = 1) * 100, 2)
+row.names(row_percentages) = c("Spring 2004", "Summer 2004", "Fall 2004", "Winter 2004", "Spring 2005")
+row_percentages
+## -----------------------------------------------------------------------------------------------------------
+table(aqi_trend$AQI_Category, aqi_trend$Month_Range)
+
+aqi_trend$AQI_Category = factor(aqi_trend$AQI_Category, 
+                                levels = rev(aqi_breakpoints$Category), 
+                                ordered = TRUE)
+aqi_trend$Month_Range = factor(aqi_trend$Month_Range,
+                                levels = c("Mar-May 2004", "Jun-Aug 2004", "Sep-Nov 2004", "Dec-Feb 2004", "Mar-Apr 2005")
+                                )
+
+ggplot(aqi_trend, aes(x = Month_Range, fill = AQI_Category)) +
+  geom_bar(position = "fill") + # For proportions
+  # geom_bar() # For counts
+  scale_fill_brewer(palette = "YlOrRd", direction = -1) + # Color matches AQI severity
+  labs(title = "AQI Category Distribution by Season",
+       y = "Proportion",
+       x = "Season (Month Range)",
+       fill = "AQI Category") +
+  theme_minimal()
+
+
+```{r}
+# Create a new dataframe without CO.GT. (target) and any irrelevant vars (like Date/Time)
+df_full <- data %>%
+  select(-Date, -Time) %>%
+  rename(CO = CO.GT.)
+
+set.seed(123)
+trainIndex <- createDataPartition(df_full$CO, p = 0.8, list = FALSE)
+train <- df_full[trainIndex, ]
+test <- df_full[-trainIndex, ]
+```
+
+```{r}
+lm_all <- lm(CO ~ ., data = train)
+summary(lm_all)  # Optional: See which predictors are significant
+
+# Predict and evaluate
+lm_all_preds <- predict(lm_all, test)
+lm_all_metrics <- eval_model(test$CO, lm_all_preds)
+
+print("Full Linear Model (All Variables):")
+print(lm_all_metrics)
+```
+```{r}
+rf_model <- randomForest(CO ~ ., data = train, ntree = 500, importance = TRUE)
+rf_preds <- predict(rf_model, newdata = test)
+rf_metrics <- eval_model(test$CO, rf_preds)
+print(rf_metrics)
+```
+```{r}
+# Fit baseline model (predicts the mean)
+lm_base <- lm(CO ~ 1, data = train)
+
+# Predict on test set
+base_preds <- predict(lm_base, newdata = test)
+
+# Evaluate
+baseline_metrics <- eval_model(test$CO, base_preds)
+print("Baseline Model (No Predictors):")
+print(baseline_metrics)
+```
+```{r}
+# Linear model using only Temperature
+lm_temp <- lm(CO ~ T, data = train)
+
+# Predict
+temp_preds <- predict(lm_temp, newdata = test)
+
+# Evaluate
+temp_metrics <- eval_model(test$CO, temp_preds)
+print("Single Variable Model (Temperature):")
+print(temp_metrics)
+```
+```{r}
+lm_rh <- lm(CO ~ RH, data = train)
+rh_preds <- predict(lm_rh, newdata = test)
+rh_metrics <- eval_model(test$CO, rh_preds)
+print("Single Variable Model (RH):")
+print(rh_metrics)
+```
+
+```{r}
+# Load ggplot2
+library(ggplot2)
+model_results <- data.frame(
+  Model = c("Baseline", "Single Var", "Selected Vars", "All Vars"),
+  R2 = c(0.00, 0.15, 0.72, 0.91),
+  RMSE = c(1.30, 1.10, 0.75, 0.43),
+  MAE = c(0.98, 0.76, 0.51, 0.27)
+)
+# Example: RMSE Comparison Chart
+ggplot(model_results, aes(x = Model, y = RMSE)) +
+  geom_col(fill = "steelblue") +
+  ggtitle("Model Comparison by RMSE") +
+  ylab("RMSE") + xlab("Model Type") +
+  theme_minimal()
+```
+```{r}
+# For R-squared
+ggplot(model_results, aes(x = Model, y = R2)) +
+  geom_col(fill = "darkgreen") +
+  ggtitle("Model Comparison by R²") +
+  ylab("R²") + xlab("Model Type") +
+  theme_minimal()
+```
+
+```{r}
+# Random Forest Baseline (without SensorCO)
+rf_base <- randomForest(CO ~ Temperature + Humidity + Hour, data = train)
+rf_base_preds <- predict(rf_base, test)
+rf_base_metrics <- eval_model(test$CO, rf_base_preds)
+print(rf_base_metrics)
+
+# Random Forest Enhanced (with SensorCO)
+rf_enh <- randomForest(CO ~ Temperature + Humidity + Hour + SensorCO, data = train)
+rf_enh_preds <- predict(rf_enh, test)
+rf_enh_metrics <- eval_model(test$CO, rf_enh_preds)
+print(rf_enh_metrics)
+```
+```{r}
+model_results <- data.frame(
+  Model = c(
+    "Linear Regression (No SensorCO)",
+    "Linear Regression (With SensorCO)",
+    "Random Forest (No SensorCO)",
+    "Random Forest (With SensorCO)"
+  ),
+  R2 = c(0.153, 0.723, 0.412, 0.829),
+  RMSE = c(1.304, 0.748, 1.087, 0.595),
+  MAE = c(0.985, 0.507, 0.765, 0.407)
+)
+
+# Display as a formatted table
+kable(model_results, caption = "Model Comparison: CO(GT) Prediction Performance")
+
+
+``{r}
+# Evaluation function for model performance
+eval_model <- function(actual, predicted) {
+  data.frame(
+    R2 = R2(predicted, actual),
+    RMSE = RMSE(predicted, actual),
+    MAE = MAE(predicted, actual)
+  )
+}
+```
+
+```{r}
+#Train-Test Split
+set.seed(123)
+trainIndex <- createDataPartition(df$CO, p = 0.8, list = FALSE)
+train <- df[trainIndex, ]
+test <- df[-trainIndex, ]
+```
+
+
+why do we need train_test split?
+
+We do a train-test split to evaluate how well our model performs on unseen data. The training set is used to build (fit) the model, while the test set simulates new data to assess prediction accuracy. This helps detect overfitting — when a model memorizes the training data but fails to generalize. Without splitting, we risk overly optimistic results. It’s essential for building reliable, real-world models.
+
+```{r}
+# --- Baseline Model (without SensorCO) ---
+lm_base <- lm(CO ~ Temperature + Humidity + Hour, data = train)
+summary(lm_base)
+lm_base_preds <- predict(lm_base, test)
+lm_base_metrics <- eval_model(test$CO, lm_base_preds)
+print(lm_base_metrics)
+
+# --- Enhanced Model (with SensorCO) ---
+lm_enh <- lm(CO ~ Temperature + Humidity + Hour + SensorCO, data = train)
+summary(lm_enh)
+lm_enh_preds <- predict(lm_enh, test)
+lm_enh_metrics <- eval_model(test$CO, lm_enh_preds)
+print(lm_enh_metrics)
+```
+
+
+# Load libraries
+library(tseries)
+library(forecast)
+
+
+data <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv")
+#########################################
+## ADF TEST CHECK STATIONARY
+#########################################
+
+# Combine Date and Time into Datetime
+data$Datetime <- as.POSIXct(paste(data$Date, data$Time), format="%Y-%m-%d %H.%M.%S")
+
+# Sort by datetime
+data <- data[order(data$Datetime), ]
+
+# Extract NO2 series
+no2_series <- data$NO2.GT.
+
+# Augmented Dickey-Fuller Test
+adf_result <- adf.test(no2_series)
+
+# Print result
+print(adf_result)
+#####################################
+## ACF PACF AUTO CORRELATION
+#####################################
+no2_series <- ts(data$NO2.GT., frequency = 24*7)
+
+plot(no2_series, main="NO2 Time Series", ylab="NO2 Concentration", xlab="Time", col="blue")
+
+adf_test <- adf.test(no2_series)
+print(adf_test)
+
+
+# Compute & Plot ACF (Autocorrelation Function)
+acf(no2_series, main="Autocorrelation Function (ACF) for NO2", lag.max=50)
+
+# Compute & Plot PACF (Partial Autocorrelation Function)
+pacf(no2_series, main="Partial Autocorrelation Function (PACF) for NO2", lag.max=50)
+
+#######################################
+## VISUALIZATION:
+#######################################
+library(ggplot2)
+
+ggplot(data, aes(x = Datetime, y = NO2.GT.)) +
+  geom_line(color = "blue") +
+  labs(title = "NO2 Time Series", x = "Date", y = "NO2 Concentration (µg/m³)") +
+  theme_minimal()
+
+data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv"
+data <- read.csv(data_path)
+
+# Load necessary libraries
+library(ggplot2)
+library(patchwork)
+library(lubridate)
+
+############################################
+## Scatter Plots for key relationships
+############################################
+p1 <- ggplot(data, aes(x = NOx.GT., y = NO2.GT.)) +
+  geom_point(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "NOx vs NO2", x = "NOx Concentration", y = "NO2 Concentration")
+
+p2 <- ggplot(data, aes(x = PT08.S5.O3., y = NO2.GT.)) +
+  geom_point(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "O3 vs NO2", x = "O3 Concentration", y = "NO2 Concentration")
+
+p3 <- ggplot(data, aes(x = C6H6.GT., y = NO2.GT.)) +
+  geom_point(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "C6H6 vs NO2", x = "C6H6 Concentration", y = "NO2 Concentration")
+
+p4 <- ggplot(data, aes(x = CO.GT., y = NO2.GT.)) +
+  geom_point(alpha = 0.4) +
+  theme_minimal() +
+  labs(title = "CO vs NO2", x = "CO Concentration", y = "NO2 Concentration")
+
+# Combine into one layout (2x2 grid)
+(p1 | p2) / (p3 | p4)
+ 
+#############################################################33
+#Seasonality Analysis for NO₂
+
+library(forecast)
+
+# Convert NO2 to time series (assuming hourly data)
+no2_ts <- ts(data$NO2.GT., frequency = 24 * 7)  # 24 hours * 7 days = weekly pattern
+
+# Apply STL decomposition
+decomp <- stl(no2_ts, s.window = "periodic")
+
+# Plot the decomposition
+plot(decomp, main = "STL Decomposition of NO2 Time Series")
+# Decompose time series (STL)
+
+autoplot(decomp) + ggtitle("Seasonal Decomposition of NO2 Time Series")
+
+
+# You’ll get four panels:
+# Original series
+# Seasonal component (cyclical patterns like time-of-day or weekly)
+# Trend (long-term movement)
+# Remainder (random noise)
+
+# BY
+
+# Convert NO2 to time series (assuming hourly data)
+no2_ts_month <- ts(data$NO2.GT., frequency = 24 * 30)  # 24 hours * 7 days = weekly pattern
+
+# Apply STL decomposition
+decomp_month <- stl(no2_ts_month, s.window = "periodic")
+
+# Plot the decomposition
+plot(decomp_month, main = "STL Decomposition of NO2 Time Series by Month")
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+
+##########################################
+## Trends analysis:
+##########################################
+
+# Create a "Year-Month" column for grouping
+data$Month <- floor_date(data$Datetime, "month")
+
+# Calculate monthly average NO2
+monthly_no2 <- aggregate(NO2.GT. ~ Month, data, mean)
+
+# Plot
+ggplot(monthly_no2, aes(x = Month, y = NO2.GT.)) +
+  geom_line(color = "blue") +
+  geom_point(color = "darkred") +
+  labs(title = "Monthly Average NO2 Levels",
+       x = "Month", y = "NO2 Concentration (µg/m³)") +
+  theme_minimal()
+
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Extract hour and month
+data$Hour <- hour(data$Datetime)
+data$MonthNum <- month(data$Datetime, label = TRUE)
+
+# Aggregate: average NO₂ by hour and month
+heatmap_data <- data %>%
+  group_by(MonthNum, Hour) %>%
+  summarise(Avg_NO2 = mean(NO2.GT., na.rm = TRUE))
+
+# Plot heatmap
+ggplot(heatmap_data, aes(x = Hour, y = MonthNum, fill = Avg_NO2)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  labs(title = "Heatmap of NO₂ by Hour and Month",
+       x = "Hour of Day", y = "Month",
+       fill = "Avg NO₂") +
+  theme_minimal()
+
+
+# Month boxplot
+ggplot(data, aes(x = MonthNum, y = NO2.GT.)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Monthly Distribution of NO2", x = "Month", y = "NO₂ (µg/m³)") +
+  theme_minimal()
+
+# Load necessary libraries
+library(tseries)
+library(forecast)
+library(ggplot2)
+library(tidyverse)
+
+# Load dataset
+data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv"
+data <- read.csv(data_path)
+data$Date <- as.Date(data$Date, format = "%Y-%m-%d")
+summary(data)
+
+# Sample 20% for training
+set.seed(2025)
+train_indices <- sample(1:nrow(data), size = 0.2 * nrow(data))
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# Convert NO2 to time series (training)
+no2_series_train <- ts(train_data$NO2.GT., frequency = 24 * 7)
+no2_series_test <- ts(test_data$NO2.GT., frequency=24*7)
+# Define exogenous variables
+exog_vars_train <- as.matrix(train_data[, c("NOx.GT.", "PT08.S5.O3.", "CO.GT.")])
+exog_vars_test <- as.matrix(test_data[, c( "NOx.GT.", "PT08.S5.O3.", "CO.GT.")])
+
+# Fit SARIMAX model
+sarimax_model <- auto.arima(no2_series_train, xreg = exog_vars_train, seasonal = TRUE)
+summary(sarimax_model)
+
+# Forecast for the test set
+forecast_values <- forecast(sarimax_model, xreg = exog_vars_test, h = nrow(test_data))
+
+# Optional: Compute RMSE
+library(Metrics)
+rmse_val <- rmse(test_data$NO2.GT., forecast_values$mean)
+cat("Test RMSE:", round(rmse_val, 2), "\n")
+#Test RMSE: 28.87
+
+
+##########################################################################
+##VISUALIZATION
+##########################################################################
+
+# Prepare dataframe for visualization
+forecast_df <- data.frame(
+  Time = test_data$Date,
+  Actual = no2_series_test,
+  Predicted = as.numeric(forecast_values$mean)
+)
+
+# Plot actual vs predicted values
+ggplot(forecast_df, aes(x = Time)) +
+  geom_line(aes(y = Actual, color = "Actual NO2"), size = 1) +
+  geom_line(aes(y = Predicted, color = "Predicted NO2"), size = 1, linetype = "dashed") +
+  ggtitle("SARIMAX Forecast vs Actual NO2 on Test Set") +
+  xlab("Date") + 
+  ylab("NO₂ Concentration") +
+  scale_color_manual(values = c("Actual NO2" = "red", "Predicted NO2" = "blue")) +
+  theme_bw()
+
+
+checkresiduals(sarimax_model)
+
+###########################################
+## For all variable:
+###########################################
+
+target_vars <- c( "NO2.GT.","Date","Time" )
+exog_vars <- setdiff(colnames(data), target_vars)
+
+# Sample 20% for training
+set.seed(2025)
+train_indices <- sample(1:nrow(data), size = 0.2 * nrow(data))
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# Convert NO2 to time series (training)
+no2_series_train <- ts(train_data$NO2.GT., frequency = 24 * 7)
+no2_series_test <- ts(test_data$NO2.GT., frequency=24*7)
+# Define exogenous variables
+exog_vars_train <- as.matrix(train_data[, exog_vars])
+exog_vars_test <- as.matrix(test_data[, exog_vars])
+
+
+---
+title: "4.SAPRC_Simulation"
+author: "Felix Vo"
+date: "2025-03-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# SAPRC exogenous variables in Biochemistry:
+
+## Approximate PAN, HONO, and SAPRC Proxy
+```{r, echo = FALSE}
+# Load necessary packages
+library(dplyr)
+```
+
+```{r}
+data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/data/final_cleaned_data.csv"
+data <- read.csv(data_path)
+```
+
+## 1. Peroxyacetyl Nitrate (PAN) Approximation
+
+### Formula (Using **Polynomial Regression** for C6H6):
+
+$$
+PAN_{proxy} = a \times NOx + b\times NOx^2 + c \times C6H6 + d\times C6H6^2 + e \times O_3 + f \times T
+$$ 
+Where:
+
+\- **NOx (NO + NO₂)** → Major precursor for PAN.
+
+-   **C6H6 (Benzene)** → A proxy for VOCs that contribute to PAN formation.
+
+\- **C6H6² (Quadratic Term)** → Captures nonlinear VOC effects.
+
+\- **O₃ (Ozone sensor value)** → PAN is strongly associated with photochemical smog.
+
+\- **T (Temperature)** → Higher temperatures accelerate PAN formation.
+
+```{r}
+
+# Replace missing values and prepare data
+data <- data %>%
+  mutate(across(c(NOx.GT., C6H6.GT., PT08.S5.O3., T, RH), ~na_if(., -200))) %>%
+  filter(!is.na(NOx.GT.), !is.na(C6H6.GT.), !is.na(PT08.S5.O3.), !is.na(T), !is.na(RH))
+
+# Generate interaction and polynomial terms
+data_model  <- data %>%
+  mutate(
+    # Polynomial terms
+    NOx2 = NOx.GT.^2,
+    C6H6_2 = C6H6.GT.^2,
+
+    # Interaction terms
+    NOx_RH = NOx.GT. * RH,
+    NOx_T = NOx.GT. * T
+  )
+
+```
+```{r}
+
+# === 2. Estimate PAN Proxy Coefficients ===
+model_pan <- lm(NO2.GT. ~ NOx.GT. + NOx2 + C6H6.GT. + C6H6_2 + PT08.S5.O3. + T, data = data_model)
+cat("\n=== PAN Proxy Coefficients ===\n")
+print(coef(summary(model_pan)))
+
+```
+```{r}
+# === 2. PAN Proxy ===
+# PAN_proxy = a * NOx + b * NOx^2 + c * C6H6 + d * C6H6^2 + e * O3 + f * T
+data_model <- data_model %>%
+  mutate(PAN_proxy = 0.225 * NOx.GT. - 0.000105 * NOx2 + 1.72 * C6H6.GT. - 0.0557 * C6H6_2 +
+           0.0238 * PT08.S5.O3. - 0.202 * T + 37.04)
+```
+
+
+
+## 2. Nitrous Acid (HONO) Approximation
+
+### Formula:
+
+$$
+HONO_{proxy} = f \times NOx + g \times RH + h \times (NOx\times Rh) + i \times T + j  \times(NO_x\times T)
+$$ Where:
+
+\- **NOx (NO + NO₂)** → HONO is formed from heterogeneous NO₂ reactions.
+
+\- **RH (Relative Humidity)** → Surface chemistry enhances HONO formation under humid conditions.
+
+\- **NOx Sensor (PT08.S3.NOx.)** → Used as an alternative for NO₂ levels.
+
+\- **T (Temperature)** → Affects the equilibrium between HONO formation and photolysis.
+
+```{r}
+# === 1. Estimate HONO Proxy Coefficients ===
+model_hono <- lm(NO2.GT. ~ NOx.GT. + RH + NOx_RH + T + NOx_T, data = data_model)
+cat("=== HONO Proxy Coefficients ===\n")
+print(coef(summary(model_hono)))
+
+```
+
+```{r}
+# === 1. HONO Proxy ===
+# HONO_proxy = f * NOx + g * RH + h * (NOx * RH) + i * T + j * (NOx * T)
+data_model <- data_model %>%
+  mutate(HONO_proxy = 0.328 * NOx.GT. - 0.499 * RH - 0.00204 * NOx_RH - 0.422 * T - 0.00246 * NOx_T + 98.30)
+```
+
+```{r}
+# === 3. SAPRC Proxy ===
+# SAPRC_proxy = a * NOx + b * C6H6 + c * C6H6^2 + d * O3 + e * T
+data_model <- data_model %>%
+  mutate(SAPRC_proxy = 0.121 * NOx.GT. + 2.885 * C6H6.GT. - 0.0891 * C6H6_2 +
+           0.0300 * PT08.S5.O3. - 0.443 * T + 42.94)
+
+# Optional: check correlation with NO2
+cor(data_model$HONO_proxy, data_model$NO2.GT., use = "complete.obs")
+cor(data_model$PAN_proxy, data_model$NO2.GT., use = "complete.obs")
+cor(data_model$SAPRC_proxy, data_model$NO2.GT., use = "complete.obs")
+```
+```{r}
+write.csv(data_model, "SAPRC_data.csv", row.names = FALSE)
+```
+```{r}
+library(ggcorrplot)
+data_numeric <- data_model %>% select(NO2.GT.,CO.GT., NOx.GT., PT08.S5.O3., T, RH, PAN_proxy, HONO_proxy, SAPRC_proxy )
+cor_matrix <- cor(data_numeric, use = "complete.obs", method = "spearman" )
+
+ggcorrplot(cor_matrix, method = "square", lab = TRUE, lab_size = 2.5)
+```
+
+# Load libraries
+library(tseries)
+library(forecast)
+library(ggplot2)
+library(dplyr)
+library(Metrics)  # for RMSE
+
+# Load dataset
+data_path <- "C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/SARIMAX + SAPRC/SAPRC_data.csv"
+data <- read.csv(data_path)
+
+# === Split into training and test sets ===
+set.seed(2025)
+train_indices <- sample(1:nrow(data), size = 0.2 * nrow(data))
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# Convert NO2 to time series
+no2_train <- ts(train_data$NO2.GT., frequency = 24 * 7)
+no2_test <- ts(test_data$NO2.GT., frequency = 24 * 7)
+
+# === 1. SARIMAX Model with Proxy Variables ===
+xreg_proxy_train <- as.matrix(train_data[, c("PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+xreg_proxy_test <- as.matrix(test_data[, c("PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+
+sarimax_proxy <- auto.arima(no2_train, xreg = xreg_proxy_train, seasonal = TRUE)
+forecast_proxy <- forecast(sarimax_proxy, xreg = xreg_proxy_test, h = nrow(test_data))
+rmse_proxy <- rmse(test_data$NO2.GT., forecast_proxy$mean)
+
+# === 2. SARIMAX Model with Full Exogenous Variables ===
+xreg_full_train <- as.matrix(train_data[, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH",
+                                            "PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+xreg_full_test <- as.matrix(test_data[, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH",
+                                          "PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+
+sarimax_full <- auto.arima(no2_train, xreg = xreg_full_train, seasonal = TRUE)
+forecast_full <- forecast(sarimax_full, xreg = xreg_full_test, h = nrow(test_data))
+rmse_full <- rmse(test_data$NO2.GT., forecast_full$mean)
+
+# === Print Results ===
+cat("SARIMAX with Proxy Variables - RMSE:", round(rmse_proxy, 2), "\n")
+#RMSE: 24.07
+cat("SARIMAX with Full Variables - RMSE:", round(rmse_full, 2), "\n")
+#RMSE: 21.73 
+
+
+##########################################################################
+##VISUALIZATION
+##########################################################################
+
+# Prepare forecast dataframe for proxy model
+forecast_proxy_df <- data.frame(
+  Time = test_data$Date,
+  Actual = test_data$NO2.GT.,
+  Predicted = as.numeric(forecast_proxy$mean)
+)
+
+# Plot: Proxy model
+ggplot(forecast_proxy_df, aes(x = Time)) +
+  geom_line(aes(y = Actual, color = "Actual NO2"), size = 1) +
+  geom_line(aes(y = Predicted, color = "Predicted NO2 (Proxy)"), size = 1, linetype = "dashed") +
+  ggtitle("SARIMAX Forecast with Proxy Variables vs Actual NO2") +
+  xlab("Date") +
+  ylab("NO2 Concentration") +
+  scale_color_manual(values = c("Actual NO2" = "red", "Predicted NO2 (Proxy)" = "blue")) +
+  theme_bw()
+ 
+# Prepare forecast dataframe for full model
+forecast_full_df <- data.frame(
+  Time = test_data$Date,
+  Actual = test_data$NO2.GT.,
+  Predicted = as.numeric(forecast_full$mean)
+)
+
+# Plot: Full model
+ggplot(forecast_full_df, aes(x = Time)) +
+  geom_line(aes(y = Actual, color = "Actual NO2"), size = 1) +
+  geom_line(aes(y = Predicted, color = "Predicted NO2 (Full)"), size = 1, linetype = "dashed") +
+  ggtitle("SARIMAX Forecast with Full Variables vs Actual NO2") +
+  xlab("Date") +
+  ylab("NO2 Concentration") +
+  scale_color_manual(values = c("Actual NO2" = "red", "Predicted NO2 (Full)" = "darkgreen")) +
+  theme_bw()
+
+combined_df$Residual_Proxy <- combined_df$Actual - combined_df$Predicted_Proxy
+combined_df$Residual_Full <- combined_df$Actual - combined_df$Predicted_Full
+
+# Residual distribution
+ggplot() +
+  geom_density(aes(x = combined_df$Residual_Proxy, color = "Proxy Residuals"), size = 1) +
+  geom_density(aes(x = combined_df$Residual_Full, color = "Full Residuals"), size = 1) +
+  ggtitle("Residual Distribution: Proxy vs Full Model") +
+  xlab("Prediction Error (Actual - Predicted)") +
+  ylab("Density") +
+  scale_color_manual(values = c("Proxy Residuals" = "blue", "Full Residuals" = "darkgreen")) +
+  theme_bw()
+
+####################
+#
+#####################
+checkresiduals(sarimax_full)
+
+combined_df <- data.frame(
+  Time = test_data$Date,
+  Actual = test_data$NO2.GT.,
+  Predicted = as.numeric(forecast_full$mean)
+)
+
+ggplot(combined_df, aes(x = Actual, y = Predicted)) +
+  geom_point(alpha = 0.5, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+  ggtitle("Scatter Plot: Predicted vs Actual NO2") +
+  xlab("Actual NO2") + ylab("Predicted NO2") +
+  theme_minimal()
+
+
+combined_df$Residual <- combined_df$Actual - combined_df$Predicted
+
+ggplot(combined_df, aes(x = Actual, y = Residual)) +
+  geom_point(alpha = 0.5, color = "tomato") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "blue") +
+  ggtitle("Prediction Error (Residuals) vs Actual NO₂") +
+  xlab("Actual NO₂") + ylab("Residual (Actual - Predicted)") +
+  theme_minimal()
+
+
+# Load data
+future_data <- read.csv("C:/Users/felix/Desktop/CODING/felix's works/Air-Quality-Analysis-Project/SARIMAX + SAPRC/SAPRC_data.csv")
+
+# Ensure future_data has enough rows (at least 48 for 48-hour forecast)
+future_xreg <- as.matrix(future_data[1:48, c("CO.GT.", "NOx.GT.", "PT08.S5.O3.", "T", "RH",
+                                             "PAN_proxy", "HONO_proxy", "SAPRC_proxy")])
+
+# Forecast next 48 hours
+future_forecast <- forecast(sarimax_full, xreg = future_xreg, h = 48)
+
+# Create timestamps for future prediction (assuming hourly data)
+last_time <- as.POSIXct(tail(data$Date, 1))
+future_time <- seq(from = last_time + 3600, by = "hour", length.out = 48)
+
+# Build forecast dataframe
+forecast_df <- data.frame(
+  Time = future_time,
+  Forecast = as.numeric(future_forecast$mean),
+  Lower = future_forecast$lower[, 2],
+  Upper = future_forecast$upper[, 2]
+)
+
+# Plot
+library(ggplot2)
+ggplot(forecast_df, aes(x = Time, y = Forecast)) +
+  geom_line(color = "darkgreen", size = 1) +
+  geom_ribbon(aes(ymin = Lower, ymax = Upper), fill = "lightgreen", alpha = 0.3) +
+  ggtitle("48-Hour Forecast of NO₂ (SARIMAX Full)") +
+  xlab("Time") + ylab("Predicted NO₂") +
+  theme_minimal()
+
+data$Date <- as.Date(data$Date)
+# === Load libraries ===
+library(forecast)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+
+# === Load dataset ===
+data <- read.csv("SAPRC_data.csv")
+data$Date <- as.Date(data$Date)
+
+# === Aggregate to weekly averages ===
+weekly_data <- data %>%
+  mutate(Week = floor_date(Date, unit = "week")) %>%
+  group_by(Week) %>%
+  summarise(
+    NO2 = mean(NO2.GT., na.rm = TRUE),
+    CO = mean(CO.GT., na.rm = TRUE),
+    NOx = mean(NOx.GT., na.rm = TRUE),
+    O3 = mean(PT08.S5.O3., na.rm = TRUE),
+    T = mean(T, na.rm = TRUE),
+    RH = mean(RH, na.rm = TRUE),
+    PAN = mean(PAN_proxy, na.rm = TRUE),
+    HONO = mean(HONO_proxy, na.rm = TRUE),
+    SAPRC = mean(SAPRC_proxy, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# === Extract Week of Year for seasonal pattern ===
+weekly_data$WeekOfYear <- isoweek(weekly_data$Week)
+
+# === Build time series and xreg matrix ===
+ts_no2 <- ts(weekly_data$NO2, frequency = 52)
+xreg_weekly <- as.matrix(weekly_data[, c("CO", "NOx", "O3", "T", "RH", "PAN", "HONO", "SAPRC")])
+
+# === Fit SARIMAX model ===
+model_weekly <- auto.arima(ts_no2, xreg = xreg_weekly, seasonal = TRUE)
+
+# === Build seasonal xreg for future (12 weeks) ===
+seasonal_means <- weekly_data %>%
+  group_by(WeekOfYear) %>%
+  summarise(across(c(CO, NOx, O3, T, RH, PAN, HONO, SAPRC), mean, na.rm = TRUE)) %>%
+  ungroup()
+
+start_week <- (isoweek(max(weekly_data$Week)) + 1) %% 52
+week_indices <- ((start_week - 1 + 0:11) %% 52) + 1
+future_xreg <- as.matrix(seasonal_means[match(week_indices, seasonal_means$WeekOfYear), -1])
+
+# === Forecast next 12 weeks ===
+forecast_result <- forecast(model_weekly, xreg = future_xreg, h = 12)
+
+# === Generate future dates ===
+last_week <- max(weekly_data$Week)
+future_weeks <- seq(from = last_week + 7, by = "week", length.out = 12)
+
+forecast_df <- data.frame(
+  Week = future_weeks,
+  Forecast = as.numeric(forecast_result$mean),
+  Lower = forecast_result$lower[, 1],
+  Upper = forecast_result$upper[, 1]
+)
+
+# === Combine historical and forecasted data ===
+full_plot_df <- weekly_data %>%
+  select(Week, NO2) %>%
+  rename(Value = NO2) %>%
+  mutate(Type = "Actual") %>%
+  bind_rows(
+    forecast_df %>%
+      select(Week, Forecast) %>%
+      rename(Value = Forecast) %>%
+      mutate(Type = "Forecast")
+  )
+
+# === Final plot ===
+ggplot() +
+  geom_line(data = full_plot_df, aes(x = Week, y = Value, color = Type), size = 1) +
+  geom_ribbon(data = forecast_df, aes(x = Week, ymin = Lower, ymax = Upper), fill = "gray", alpha = 0.3) +
+  geom_vline(xintercept = as.numeric(max(weekly_data$Week)), linetype = "dashed") +
+  scale_color_manual(values = c("Actual" = "steelblue", "Forecast" = "darkgreen")) +
+  ggtitle("12-Week NO₂ Forecast (SARIMAX Full Model with Seasonal Inputs)") +
+  xlab("Week") + ylab("Average NO₂ (µg/m³)") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
+  theme_minimal()
+
+# === Merge actual and forecast as one continuous line ===
+continuous_df <- weekly_data %>%
+  select(Week, NO2) %>%
+  rename(Value = NO2) %>%
+  bind_rows(
+    forecast_df %>%
+      select(Week, Forecast) %>%
+      rename(Value = Forecast)
+  )
+
+# === Plot with continuous line ===
+ggplot() +
+  geom_line(data = continuous_df, aes(x = Week, y = Value), color = "darkgreen", size = 1) +
+  geom_ribbon(data = forecast_df, aes(x = Week, ymin = Lower, ymax = Upper), 
+              fill = "gray", alpha = 0.3) +
+  geom_vline(xintercept = as.numeric(max(weekly_data$Week)), linetype = "dashed") +
+  ggtitle("12-Week NO2 Forecast (SARIMAX Full Model with SAPRC)") +
+  xlab("Week") + ylab("Average NO₂ (µg/m³)") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %Y") +
+  theme_minimal()
+setwd("C:/Users/DucDo/OneDrive-UniversityofManitoba/Documents/University_documents/UofM/WInter2025/DATA2010/Air-Quality-Analysis-Project")
+
+df = read.csv("Datasets/final_cleaned_data.csv")
+
+df_AQI = read.csv("2. Correlations & Sensor Calibration/data_with_AQI.csv")
+
+df$Date <- as.Date(df$Date)
+df$month <- format(df$Date, "%m")  # Extract month as number (01, 02, ...)
+
+categorize_AQI = function(AQI) {
+  if (AQI <= 50) {
+    return("Good")
+  } else if (AQI <= 100) {
+    return("Moderate")
+  } else if (AQI <= 150) {
+    return("Unhealthy for Sensitive Groups")
+  } else if (AQI <= 200) {
+    return("Unhealthy")
+  } else if (AQI <= 300) {
+    return("Very Unhealthy")
+  } else {
+    return("Hazardous")
+  }
+}
+
+df$AQI = df_AQI$AQI
+# Apply AQI function to each row in dataset
+df = df %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI))
+
+head(df)
+
+sum(df == -200)
+colSums(df == -200)
+
+typeof(df$Date)
+typeof(df$Time)
+typeof(df)
+
+# df2 <- read.csv("formated_data.csv")
+# head(df2)
+
+# 1. Calculate correlation matrix (excluding columns 1 & 2)
+cor_matrix <- cor(as.matrix(df[-c(1, 2)]))
+
+# 3. Better alternative using ggplot2
+library(ggplot2)
+library(reshape2) # For melt() function
+
+correlation_heatmap = function(cor_matrix) {
+  # Convert correlation matrix to long format
+  melted_cor <- melt(cor_matrix)
+  
+  # Create heatmap
+  ggplot(melted_cor, aes(Var1, Var2, fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                         midpoint = 0, limit = c(-1,1)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    coord_fixed()
+}
+
+correlation_heatmap(cor_matrix = cor_matrix)
+
+library(tidyverse)
+
+df$month = as.integer(df$month)
+
+# Define predictors (exclude Date, Time, and targets)
+predictors <- df %>% select(-c(Date, Time, CO.GT., C6H6.GT., NOx.GT., NO2.GT., AQI, AQI_Category))
+# predictors <- df %>% select(-c(Date, Time, NO2.GT., AQI, AQI_Category))
+# predictors <- df %>% select(-c(Date, Time, NO2.GT.))
+
+# Define multiple target variables (CO, NOx, Benzene)
+targets <- df %>% select(CO.GT., C6H6.GT., NOx.GT., NO2.GT.)
+# targets <- df %>% select(NO2.GT.)
+
+# Normalize data (optional but recommended)
+
+normalize <- function(x) { 
+  (x - min(x)) / (max(x) - min(x)) 
+}
+
+predictors <- as.data.frame(lapply(predictors, normalize))
+# targets <- as.data.frame(lapply(targets, normalize))
+
+# Convert to matrices for Keras
+X <- as.matrix(predictors)
+# Y <- as.matrix(targets)
+
+correlation_heatmap(cor(X))
+
+# we can see that T, RH and AH are not very correlated to sensor data and pollutant concentration, so we should exclude them.
+
+predictors <- predictors %>% select(-c("T", "RH", "AH"))
+################################## KNN
+
+library(FNN)
+
+# Split into training and testing sets
+set.seed(2025)
+trainIndex <- sample(1:nrow(df), size = 0.8 * nrow(df))
+train_x <- predictors[trainIndex, ]
+train_y <- targets[trainIndex, ]
+test_x <- predictors[-trainIndex, ]
+test_y <- targets[-trainIndex, ]
+
+knn_result <- function(target) {
+  # Train kNN regression model
+  knn_fit <- knn.reg(train = train_x,
+                        test = test_x,
+                        # y = train_y,
+                        y = train_y[[target]],
+                        k = 5)  # k = 5 nearest neighbors
+  
+  # Predictions
+  predictions <- knn_fit$pred
+  
+  # Evaluate model performance for multiple targets
+  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y)^2)
+  # return (mse)
+  
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
+  # Normalize MSE by the mean of the actual values
+  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y)
+  
+  mse_normalized <- rmse / target_mean
+  
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
+}
+
+
+# CO.GT.     C6H6.GT.      NOx.GT.      NO2.GT. 
+# 3.430058e-01 1.009973e+02 9.607039e+04 1.366777e+04 
+
+### Well that is bad. Hold on the code is fucked.
+
+# Example usage for one target variable:
+rmse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.5778774   # 0.2807137
+rmse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 3.601207    # 0.3714302
+rmse_NOx <- knn_result("NOx.GT.") # 5837.382       # 75.71713    # 0.3230885
+rmse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rmse_CO
+rmse_C6H6
+rmse_NOx
+rmse_NO2
+
+### NO2 is the best, C6H6 is the worst.
+
+
+###=========================================
+# use T, AH and RH reduces the rmse
+# > rmse_CO
+# [1] 0.2595928
+# > rmse_C6H6
+# [1] 0.2542076
+# > rmse_NOx
+# [1] 0.2914516
+# > rmse_NO2
+# [1] 0.17697
+
+# use month reduces rmse even more
+# > rmse_CO
+# [1] 0.4978949
+# [1] 0.2418609
+# > rmse_C6H6
+# [1] 1.839073
+# [1] 0.1896829
+# > rmse_NOx
+# [1] 59.58025
+# [1] 0.2542317
+# > rmse_NO2
+# [1] 17.60785
+# [1] 0.1633321
+
+
+############################ use caret library
+
+# library(caret)
+# 
+train = cbind(train_x, train_y)
+# 
+# # List of target variables
+# # target_names <- c("CO.GT.", "C6H6.GT.", "NOx.GT.", "NO2.GT.")
+# 
+# #######################################################
+# 
+# # Train KNN model using caret
+# 
+# knn_fit <- train(NO2.GT. ~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3., 
+#                  data = train, 
+#                  method = "knn",
+#                  tuneGrid = expand.grid(k = 5),  # Specify number of neighbors
+#                  trControl = trainControl(method = "cv", number = 10))  # Cross-validation
+# 
+# # Predictions
+# predictions_caret <- predict(knn_fit, newdata = test_x)
+# 
+# # Evaluate performance
+# mse_caret <- mean((predictions_caret - test_y$CO.GT.)^2)
+# mse_caret
+
+
+# 0.3503605 84.74771 91115.17 13220.71
+
+#### this is useless
+
+######################################################## Random forest
+
+library(randomForest)
+
+colnames(train)[colnames(train) == "train_y"] <- "NO2.GT."
+
+# test <- cbind(test_x, test_y)
+
+rf_result_df = list()
+
+rf_result <- function(target) {
+  rf_model <- randomForest(as.formula(paste(target, "~ PT08.S1.CO. + PT08.S2.NMHC. + PT08.S3.NOx. + PT08.S4.NO2. + PT08.S5.O3. + T + RH + AH + month + PAN_proxy + HONO_proxy + SAPRC_proxy")),  
+                           data = train)
+                           #importance = TRUE)  
+  
+  predictions <- predict(rf_model, test_x)
+  rf_result_df[[target]] <<- predictions
+
+  # Evaluate model performance for multiple targets
+  # mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  mse <- mean((predictions - test_y)^2)
+  # return (mse)
+  
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
+  # Normalize MSE by the mean of the actual values
+  # target_mean <- mean(test_y[[target]])
+  target_mean <- mean(test_y)
+  mse_normalized <- rmse / target_mean
+  
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
+}
+
+# Example usage for one target variable:
+rf_rmse_CO <- rf_result("CO.GT.")        # 0.5778774   # 0.2807137
+rf_rmse_C6H6 <- rf_result("C6H6.GT.")    # 3.601207    # 0.3714302
+rf_rmse_NOx <- rf_result("NOx.GT.")      # 75.71713    # 0.3230885
+rf_rmse_NO2 <- rf_result("NO2.GT.")      # 21.05513    # 0.1953094
+
+rf_result_df <- as.data.frame(rf_result_df)
+
+# Display MSE for each target
+rf_rmse_CO       # 0.4806054 0.2334622
+rf_rmse_C6H6     # 2.900826  0.2991926
+rf_rmse_NOx      # 67.9865   0.2901015
+rf_rmse_NO2      # 20.07209  0.1861906
+
+### random forest is better than KNN
+
+# using T, AH, RH and month reduces rmse like knn
+# > rf_rmse_CO      
+# [1] 0.4385208
+# [1] 0.2130189
+# > rf_rmse_C6H6    
+# [1] 1.562383
+# [1] 0.161145
+# > rf_rmse_NOx      
+# [1] 55.14515
+# [1] 0.2353069
+# > rf_rmse_NO2     
+# [1] 16.7216
+# [1] 0.1551112
+
+################################################ K means Clustering
+
+# df_normalized = as.data.frame(lapply(df[,-c(1, 2)], normalize))
+
+df$month <- factor(df$month, levels = sprintf("%02d", 1:12))  # Ensure proper factor levels with leading zero  
+
+# Assign colors explicitly to each month
+month_colors <- setNames(rainbow(length(levels(df$month))), levels(df$month))
+months_colors <- month_colors[df$month]
+
+df$month = as.integer(df$month)
+# PCA analysis
+# pca_result <- prcomp(df[, -c(1, 2, 15, 16)], center = TRUE, scale = TRUE)
+pca_result <- prcomp(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], center = TRUE, scale = TRUE)
+
+
+# Proportion of variance
+prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+round(prcomp_proportionVariate, 5)
+
+# Plot
+PCA_month_plot = plot(pca_result$x[, 1], pca_result$x[, 2], 
+     xlab = "PC1(53.42%)", ylab = "PC2(23.88%)", 
+     col = months_colors, pch = 19, 
+     main = "PCA dimension reduction")
+
+# Correct legend with all months labeled
+
+legend("bottomright", legend = names(month_colors),
+       col = month_colors, pch = 19, cex = 0.5)
+
+# there is a pattern for months
+
+## [1] 237 13 69 71 179
+library(factoextra)
+
+fviz_nbclust(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], kmeans, method = "silhouette")
+
+results <- kmeans(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], centers = 6)
+fviz_cluster(results, data = df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], geom = "point")
+
+## no meaning for now (for both month included or excluded)
+
+##________________________________________________________________ AQI
+
+df$AQI_Category <- as.factor(df$AQI_Category)  # Ensure it's a factor
+
+# Assign colors explicitly to each month
+AQI_colors <- setNames(rainbow(length(levels(df$AQI_Category))), levels(df$AQI_Category))
+AQIs_colors <- AQI_colors[df$AQI_Category]
+
+# # Plot
+# plot(pca_result$x[, 1], pca_result$x[, 2], 
+#      xlab = "PC1(55.91%)", ylab = "PC2(19.76%)", 
+#      col = AQIs_colors, pch = 19, 
+#      main = "PCA dimension reduction")
+# 
+# # Correct legend with all months labeled
+# 
+# legend("bottomright", legend = names(AQI_colors),
+#        col = AQI_colors, pch = 19, cex = 0.8)
+
+library(ggplot2)
+
+# Create a data frame for ggplot
+pca_df <- data.frame(PC1 = pca_result$x[, 1], PC2 = pca_result$x[, 2], AQI_Category = df$AQI_Category)
+
+# Plot using ggplot2
+ggplot(pca_df, aes(x = PC1, y = PC2, color = AQI_Category)) +
+  geom_point(size = 3) +
+  labs(title = "PCA dimension reduction", 
+       x = "PC1 (47.71%)", y = "PC2 (22.91%)") +
+  theme_minimal() +
+  theme(legend.position = "right")  # Easily place the legend on the right
+
+###================================================ KNN for AQI category 
+library(class)
+
+# y_pred <- knn(train = train[,-(10:13)], test = test_x, cl = df[,5], k = 5)
+
+AQI_cat_pred <- knn(train = train_x, test = test_x, cl = df[trainIndex, 17], k = 1)
+AQI_cat_pred = as.factor(AQI_cat_pred)
+
+AQI_cat_actual <- df[-trainIndex, 17]
+table(AQI_cat_actual, AQI_cat_pred)
+
+# Install ggplot2 if not already installed
+# install.packages("ggplot2")
+
+# library(ggplot2)
+# 
+# # Create the confusion matrix
+# cm <- table(AQI_cat_actual, AQI_cat_pred)
+# 
+# # Convert the confusion matrix to a data frame
+# cm_df <- as.data.frame(cm)
+# 
+# # Plot the confusion matrix as a heatmap
+# ggplot(cm_df, aes(x = AQI_cat_pred, y = AQI_cat_actual, fill = Freq)) +
+#   geom_tile() +
+#   scale_fill_gradient(low = "white", high = "steelblue") +
+#   theme_minimal() +
+#   labs(x = "Predicted Category", y = "Actual Category", fill = "Frequency") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# 
+# ###### proportion
+# 
+# # Normalize by the total count to get proportions
+# cm_df$Proportion <- cm_df$Freq / sum(cm_df$Freq)
+# 
+# # Plot the confusion matrix as a heatmap with proportions
+# ggplot(cm_df, aes(x = AQI_cat_pred, y = AQI_cat_actual, fill = Proportion)) +
+#   geom_tile() +
+#   scale_fill_gradient(low = "white", high = "steelblue") +
+#   theme_minimal() +
+#   labs(x = "Predicted Category", y = "Actual Category", fill = "Proportion") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Compare actual and predicted values
+correct_predictions <- sum(AQI_cat_actual == AQI_cat_pred)
+
+# Total number of predictions
+total_predictions <- length(AQI_cat_actual)
+
+# Accuracy
+accuracy <- correct_predictions / total_predictions
+accuracy     # 0.6762821 # better than k = 8, 10
+# 0.6901709 for k = 3   # better than k = 2
+# 0.6987179 for k = 1
+
+###============================ RF for AQI cat
+
+rf_AQI_cat <- randomForest(AQI_Category ~ ., data=data.frame(train_x, AQI_Category = as.factor(df[trainIndex,]$AQI_Category)))
+rf_AQI_cat_pred <- predict(rf_AQI_cat, test_x)
+table(rf_AQI_cat_pred, AQI_cat_actual)
+
+correct_predictions <- sum(AQI_cat_actual == rf_AQI_cat_pred)
+
+# Total number of predictions
+total_predictions <- length(AQI_cat_actual)
+
+# Accuracy
+accuracy <- correct_predictions / total_predictions
+accuracy # 0.7195513
+
+
+##### plot
+
+library(ggplot2)
+library(reshape2)
+
+# conf_df <- as.data.frame(table(rf_AQI_cat_pred, AQI_cat_actual))
+conf_df <- as.data.frame(table(AQI_cat_pred, AQI_cat_actual))
+
+names(conf_df) <- c("Predicted", "Actual", "Freq")
+
+###
+prop_by_actual <- conf_df %>%
+  group_by(Actual) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+# Plot counts
+p1 <- ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", name = "Count") +
+  geom_text(aes(label = Freq), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Counts)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plot proportions by actual category
+p2 <- ggplot(prop_by_actual, aes(x = Actual, y = Predicted, fill = Proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", 
+                      name = "Proportion",
+                      labels = scales::percent) +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 1)), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Proportions by Actual Category)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Calculate proportions by predicted category
+prop_by_predicted <- conf_df %>%
+  group_by(Predicted) %>%
+  mutate(Proportion = Freq / sum(Freq))
+
+# Plot proportions by predicted category
+p3 <- ggplot(prop_by_predicted, aes(x = Actual, y = Predicted, fill = Proportion)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue", 
+                      name = "Proportion",
+                      labels = scales::percent) +
+  geom_text(aes(label = scales::percent(Proportion, accuracy = 1)), size = 3.5) +
+  labs(title = "Confusion Matrix KNN k=1(Proportions by Predicted Category)",
+       x = "Actual Category",
+       y = "Predicted Category") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# To display all three plots together
+# library(gridExtra)
+# grid.arrange(p1, p2, p3, ncol = 3)
+# Or if you prefer a vertical layout:
+# grid.arrange(p1, p2, p3, nrow = 3)
+
+################ RF is clearly better (best for Unhealthy and UnhealthyFSG with 79% and 74%). Make sense as those are the majorities of the dataset.
+
+### Lasso
+library(glmnet)
+fit_lasso <- glmnet(train_x, train_y[,1])
+# Note: The x-axis is on the log scale
+plot(fit_lasso, xvar = "lambda", main = "CO.GT.")
+legend("topleft", legend = colnames(test_x), col = 1:9, lty = 1, cex = 0.5)
+
+lasso_coefs <- coef(fit_lasso, s = exp(-6))  # or choose a specific lambda
+
+# Print the coefficients
+print(lasso_coefs) # PT08.S2.NMHC. contribute the most
+
+cor(df$CO.GT., df$PT08.S2.NMHC.)  # 0.8600162
+cor(df$CO.GT., df$PT08.S5.O3.)    # 0.8253229
+cor(df$CO.GT., df$PT08.S3.NOx.)   # -0.688505
+cor(df$CO.GT., df$PT08.S1.CO.)    # 0.8270612
+cor(df$CO.GT., df$month)          # 0.08992948
+
+
+##### Test if PCA reduces rmse
+# Perform PCA
+pca_result <- prcomp(df[, c(4, 6, 8, 10, 11, 12, 13, 14, 15)], center = TRUE, scale = TRUE)
+prcomp_proportionVariate <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+round(prcomp_proportionVariate, 5)
+sum(prcomp_proportionVariate[1:3])
+# choose 3 pcs = 85.66% variations of training set and 1/3 less features
+# Extract first 3 PCs
+pca_train <- data.frame(pca_result$x[trainIndex, 1:3])  
+colnames(pca_train) <- c("PC1", "PC2", "PC3")  # Rename for clarity
+# pca_train$target <- df[trainIndex, target]  # Add target variable
+
+pca_test <- data.frame(pca_result$x[-trainIndex, 1:3])
+colnames(pca_test) <- c("PC1", "PC2", "PC3")
+
+library(randomForest)
+
+rf_result <- function(target) {
+  # Ensure target is in the training data
+  pca_train$target <- df[trainIndex, target]
+  
+  # Train the model
+  rf_model <- randomForest(target ~ PC1 + PC2 + PC3, data = pca_train)
+  
+  # Predictions
+  predictions <- predict(rf_model, pca_test)
+  
+  # Compute RMSE
+  mse <- mean((predictions - test_y[[target]])^2)
+  rmse <- sqrt(mse)
+  
+  # Normalize MSE
+  target_mean <- mean(test_y[[target]])
+  mse_normalized <- rmse / target_mean
+  
+  return(list(rmse = rmse, mse_normalized = mse_normalized))
+}
+
+# Example usage for one target variable:
+rf_rmse_CO <- rf_result("CO.GT.")        # 0.5778774   # 0.2807137
+rf_rmse_C6H6 <- rf_result("C6H6.GT.")    # 3.601207    # 0.3714302
+rf_rmse_NOx <- rf_result("NOx.GT.")      # 75.71713    # 0.3230885
+rf_rmse_NO2 <- rf_result("NO2.GT.")      # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rf_rmse_CO       # 0.4806054 0.2334622
+rf_rmse_C6H6     # 2.900826  0.2991926
+rf_rmse_NOx      # 67.9865   0.2901015
+rf_rmse_NO2      # 20.07209  0.1861906
+
+# > rf_rmse_CO       # 0.4806054 0.2334622
+# [1] 0.5741969
+# [1] 0.2789259
+# > rf_rmse_C6H6     # 2.900826  0.2991926
+# [1] 2.797983
+# [1] 0.2885854
+# > rf_rmse_NOx      # 67.9865   0.2901015
+# [1] 96.026
+# [1] 0.4097474
+# > rf_rmse_NO2      # 20.07209  0.1861906
+# [1] 23.03381
+# [1] 0.2136639
+
+# rmse is worse for RF
+
+### try for knn
+
+knn_result <- function(target) {
+  # Train kNN regression model
+  knn_fit <- knn.reg(train = pca_train,
+                     test = pca_test,
+                     # y = train_y,
+                     y = train_y[[target]],
+                     k = 10)  # k = 5 nearest neighbors
+  
+  # Predictions
+  predictions <- knn_fit$pred
+  
+  # Evaluate model performance for multiple targets
+  mse <- mean((predictions - test_y[[target]])^2)  # Compute MSE for each target
+  # mse <- mean((predictions - test_y)^2)
+  # return (mse)
+  
+  rmse <- sqrt(mse)
+  
+  # return (rmse)
+  
+  # Normalize MSE by the mean of the actual values
+  target_mean <- mean(test_y[[target]])
+  # target_mean <- mean(test_y)
+  
+  mse_normalized <- rmse / target_mean
+  
+  return (list(rmse, mse_normalized))  # Return the normalized MSE for this target
+}
+
+rmse_CO <- knn_result("CO.GT.") # 0.3430058        # 0.5778774   # 0.2807137
+rmse_C6H6 <- knn_result("C6H6.GT.") # 15.61902     # 3.601207    # 0.3714302
+rmse_NOx <- knn_result("NOx.GT.") # 5837.382       # 75.71713    # 0.3230885
+rmse_NO2 <- knn_result("NO2.GT.") # 453.9531       # 21.05513    # 0.1953094
+
+# Display MSE for each target
+rmse_CO
+rmse_C6H6
+rmse_NOx  # 0.4296827
+rmse_NO2  # 0.2237448
+
+### worse than RF, and worst than knn without PCA. Direction failed.
+
+###### regression to classification
+
+###======================================================== AQI function
+# Define AQI breakpoints as a data frame
+aqi_breakpoints = data.frame(
+  Category = c("Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous"),
+  APLo = c(0, 51, 101, 151, 201, 301),
+  APHi = c(50, 100, 150, 200, 300, 500),
+  CO_Lo = c(0, 4.4, 9.4, 12.4, 15.4, 30.4),
+  CO_Hi = c(4.4, 9.4, 12.4, 15.4, 30.4, 50.4),
+  NOx_Lo = c(0, 53, 100, 360, 649, 1249),
+  NOx_Hi = c(53, 100, 360, 649, 1249, 2049),
+  NO2_Lo = c(0, 53, 100, 360, 649, 1249),
+  NO2_Hi = c(53, 100, 360, 649, 1249, 2049),
+  C6H6_Lo = c(0, 3, 7, 10, 15, 20),
+  C6H6_Hi = c(3, 7, 10, 15, 20, 30)
+)
+
+# Function to compute AQI for a given pollutant
+compute_AQI = function(CP, BPLo, BPHi, APLo, APHi) {
+  AQI = ((APHi - APLo) / (BPHi - BPLo)) * (CP - BPLo) + APLo
+  return(AQI)
+}
+
+# Function to get AQI for a given pollutant
+get_AQI = function(CP, pollutant) {
+  for (i in 1:nrow(aqi_breakpoints)) {
+    if (CP >= aqi_breakpoints[[paste0(pollutant, "_Lo")]][i] && CP < aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]) {
+      BPLo = aqi_breakpoints[[paste0(pollutant, "_Lo")]][i]
+      BPHi = aqi_breakpoints[[paste0(pollutant, "_Hi")]][i]
+      APLo = aqi_breakpoints$APLo[i]
+      APHi = aqi_breakpoints$APHi[i]
+      return(compute_AQI(CP, BPLo, BPHi, APLo, APHi))
+    }
+  }
+  return(NA)  # Return NA if value is outside the defined range
+}
+
+calculate_rolling = function(x, window, FUN = mean) {
+  zoo::rollapplyr(x, width = window, FUN = FUN, fill = NA, partial = TRUE)
+}
+
+rf_result_df = rf_result_df %>%
+  mutate(
+    CO_8h_avg = calculate_rolling(CO.GT., 8),
+    C6H6_24h_avg = calculate_rolling(C6H6.GT., 24)
+  )
+
+# Apply AQI function to each row in dataset
+rf_result_df = rf_result_df %>%
+  mutate(
+    AQI_CO = sapply(CO_8h_avg, get_AQI, pollutant = "CO"),
+    AQI_C6H6 = sapply(C6H6_24h_avg, get_AQI, pollutant = "C6H6"),
+    AQI_NOx = sapply(NOx.GT., get_AQI, pollutant = "NOx"),
+    AQI_NO2 = sapply(NO2.GT., get_AQI, pollutant = "NO2")
+    
+  ) %>%
+  mutate(AQI = pmax(AQI_CO, AQI_C6H6, AQI_NOx, AQI_NO2, na.rm = TRUE),
+         Dominant_Pollutant = case_when(
+           AQI_CO == AQI  ~ "CO",
+           AQI_C6H6 == AQI ~ "C6H6",
+           AQI_NOx == AQI ~ "NOx",
+           AQI_NO2 == AQI ~ "NO2",
+           TRUE ~ "Other"
+         )
+  )
+
+rf_result_df = rf_result_df %>%
+  mutate(AQI_Category = sapply(AQI, categorize_AQI))
+
+sum(df[-trainIndex,17] == rf_result_df$AQI_Category) / nrow(rf_result_df)
+# 0.5758547 accuracy which is much worse than just classification
+
+###======================================== combine SAPRC_data.csv
+df_SAPRC = read.csv("4. SARIMAX + SAPRC/SAPRC_data.csv")
+df$PAN_proxy = df_SAPRC$PAN_proxy
+df$HONO_proxy = df_SAPRC$HONO_proxy
+df$SAPRC_proxy = df_SAPRC$SAPRC_proxy
+
+### NO2 using SAPRC: 13.99655, 0.1298333 which is the best for NO2.

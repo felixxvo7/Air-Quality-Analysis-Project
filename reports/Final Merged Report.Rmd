@@ -31,9 +31,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 # I. Introduction:
 
-The **UCI Air Quality dataset** provides a comprehensive record of pollution levels in Rome, Italy, capturing hourly measurements of key pollutants—including Carbon Monoxide ($CO$), Nitrogen Dioxide ($NO_2$), Total Nitrogen Oxides ($NO_x$), Benzene ($C_6H_6$), and Non-Methane Hydrocarbons ($NMHC$)—alongside sensor responses and environmental variables such as temperature and humidity. This dataset offers a unique opportunity to analyze sensor performance, assess air quality trends, and develop predictive models for pollutant concentrations.
+The UCI Air Quality dataset provides a comprehensive record of pollution levels in Rome, Italy, capturing hourly measurements of key pollutants—including Carbon Monoxide ($CO$), Nitrogen Dioxide ($NO_2$), Total Nitrogen Oxides ($NO_x$), Benzene ($C_6H_6$), and Non-Methane Hydrocarbons ($NMHC$)—alongside sensor responses and environmental variables such as temperature and humidity. This dataset offers a unique opportunity to analyze sensor performance, assess air quality trends, and develop predictive models for pollutant concentrations.
 
-This analysis is structured into four key components: **sensor calibration and air quality assessment**, which evaluates the correlation between sensor readings and true pollutant concentrations while detecting cross-sensitivities and analyzing seasonal AQI variations; **regression-based CO prediction**, which aims to develop models for estimating CO levels based on sensor and environmental data; **time series and hybrid modeling**, which explores temporal trends and advanced modeling techniques for pollutant forecasting; and **machine learning comparison**, which assesses different algorithms to determine the most effective approaches for air quality prediction and monitoring.
+This analysis is structured into four key components: sensor calibration and air quality assessment, which evaluates the correlation between sensor readings and true pollutant concentrations while detecting cross-sensitivities and analyzing seasonal AQI variations; regression-based CO prediction, which aims to develop models for estimating CO levels based on sensor and environmental data; time series and hybrid modeling, which explores temporal trends and advanced modeling techniques for pollutant forecasting; and machine learning comparison, which assesses different algorithms to determine the most effective approaches for air quality prediction and monitoring.
 
 # II. Preprocessing
 
@@ -74,7 +74,7 @@ After examining the data's summary statistics and missingness patterns, we found
 
 ### 1.1 Exploratory Data Analysis (EDA)
 
-The Histograms reveal right-skewed distributions for all pollutants. This non-normality motivates the use of **non-parametric correlation measures**. Additionally, boximages highlight the presence of significant outliers across all pollutants. The consistent pattern of **median concentrations being lower than the means** confirms the positive skewness of the data.
+The Histograms reveal right-skewed distributions for all pollutants. This non-normality motivates the use of non-parametric correlation measures. Additionally, boximages highlight the presence of significant outliers across all pollutants. The consistent pattern of median concentrations being lower than the means confirms the positive skewness of the data.
 
 ![](images/pollutants_dist_outlier.png){width="678"}
 
@@ -159,9 +159,9 @@ The AQI trend shows significant fluctuations, frequently exceeding the `Unhealth
 
 ![](./images/AQI_trend_colored.png)
 
-Table 2 summarizes the seasonal contributions of individual pollutans to AQI, revealing that benzene ($C_6H_6$) is the dominant pollutant in Spring, Summer and Fall, accounting for over 75% of AQI excrescences, with a peak contributes of 90.22% during Summer. In contrast, Winter AQI is primarily influenced by $NO_x$ , which contributes 67.78%, likely due to increased combustion activities. The transition period in early Spring 2005 marks a shift, where $NO_x$ and $C_6H_6$ exhibit nearly equal contributions, indicating a changing pollution patterns over time.
+Table summarizes the seasonal contributions of individual pollutans to AQI, revealing that benzene ($C_6H_6$) is the dominant pollutant in Spring, Summer and Fall, accounting for over 75% of AQI excrescences, with a peak contributes of 90.22% during Summer. In contrast, Winter AQI is primarily influenced by $NO_x$ , which contributes 67.78%, likely due to increased combustion activities. The transition period in early Spring 2005 marks a shift, where $NO_x$ and $C_6H_6$ exhibit nearly equal contributions, indicating a changing pollution patterns over time.
 
-## 4. Seasonal Variation Analysis
+## 3. Seasonal Variation Analysis
 
 ![](./images/AQI_category_seasonal.png){width="402"}
 
@@ -347,9 +347,9 @@ The 12-week SARIMAX forecast shows a gradual decline in $NO_2$ levels from April
 
 The forecasting confirmed strong seasonality in $NO_2$ levels and strong correlations with pollutants like $NO_x$. While the basic SARIMAX model captured trends (RMSE = 28.87), adding SAPRC proxies like PAN and HONO improved accuracy (RMSE = 21.73).The proxy variables better captured the chemical interactions affecting $NO_2$ concentrations, making predictions more accurate, especially during peak emissions and seasonal shifts.
 
-# VI. Pattern Recognition and Machine Learning for Predicting Pollutant Concentrations and AQI Categories from Sensor and Environmental Data
+# VI. Machine Learning for Predicting Pollutant Concentrations and AQI Categories from Sensor and Environmental Data
 
-## 1. Regression Analysis for Pollutant Concentrations Using KNN and Random Forest
+## 1. Regression for Pollutant Concentrations Using KNN and Random Forest
 
 We extract the **month** column as an integer feature. Before training, all covariates (excluding target variables) undergo **Min-Max normalization** to eliminate unit bias:
 
@@ -524,9 +524,6 @@ Follow this Github link for code appendix. [***Press link here***](https://githu
 
 # References
 
--   Rolling Functions for Time Series – zoo package (Zeileis & Grothendieck, 2005), *Journal of Statistical Software*.\
-    <https://doi.org/10.18637/jss.v014.i06>
-
 -   Technical Assistance Document for the Reporting of Daily Air Quality – the AQI, AirNow.gov.\
     <https://document.airnow.gov/technical-assistance-document-for-the-reporting-of-daily-air-quailty.pdf>
 
@@ -551,9 +548,6 @@ Follow this Github link for code appendix. [***Press link here***](https://githu
 -   A Complete Tutorial on Time Series Modeling in Python, Analytics Vidhya.\
     <https://www.analyticsvidhya.com/blog/2015/12/complete-tutorial-time-series-modeling/>
 
--   Complete Guide to SARIMAX in Python, GeeksforGeeks.\
-    <https://www.geeksforgeeks.org/complete-guide-to-sarimax-in-python/>
-
 -   Seasonal Decomposition of Time Series by LOESS (STL), GeeksforGeeks.\
     <https://www.geeksforgeeks.org/seasonal-decomposition-of-time-series-by-loess-stl/>
 
@@ -568,12 +562,6 @@ Follow this Github link for code appendix. [***Press link here***](https://githu
 -   A Detailed Mechanism for the Gas-Phase Atmospheric Reactions of Organic Compounds, Carter, *Atmospheric Environment* (1990).
 
 -   Gas-phase Tropospheric Chemistry of Organic Compounds: A Review, Atkinson, *Atmospheric Environment* (1990).
-
--   The Second Generation Regional Acid Deposition Model Chemical Mechanism for Regional Air Quality Modeling, Stockwell et al., *Journal of Geophysical Research* (1990).
-
--   Computer Modeling Study of Incremental Hydrocarbon Reactivity, Carter & Atkinson, *Environmental Science & Technology* (1989).
-
--   Jolliffe, I. T. (2002). Principal component analysis. Springer series in statistics. Springer-Verlag, New York.
 
 -   Jolliffe, I. T. (2002). *Principal Component Analysis* (2nd ed.). Springer Series in Statistics.\
     <https://doi.org/10.1007/b98835>
