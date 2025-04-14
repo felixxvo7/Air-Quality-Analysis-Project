@@ -69,7 +69,7 @@ This project analyzes the UCI Air Quality Dataset, which contains hourly air pol
 
 ## Results
 
-For details, please consult the [final report]("reports/Final Report UCI Air Quality Analysis in Rome.pdf").
+For details, please consult the [final report](reports/Final Report UCI Air Quality Analysis in Rome.pdf).
 
 ## Authors
 
