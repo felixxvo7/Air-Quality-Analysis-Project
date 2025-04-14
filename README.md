@@ -33,26 +33,27 @@ This project analyzes the UCI Air Quality Dataset, which contains hourly air pol
 
 ### a. Sensor Calibration & Air Quality
 
--   How do sensor responses correlate with true pollutant concentrations?\
--   Do environmental factors bias sensor readings?\
+-   How do sensor responses correlate with true pollutant concentrations?
+-   Do environmental factors bias sensor readings?
 -   What are seasonal trends in AQI, and which pollutants dominate poor air quality?
 
 ### b. CO Prediction
 
--   Can temperature, humidity, and time predict CO(GT)?\
--   Does adding sensor data improve prediction accuracy?\
+-   Can temperature, humidity, and time predict CO(GT)?
+-   Does adding sensor data improve prediction accuracy?
 -   How do linear (Linear Regression) and nonlinear (Random Forest) models perform?
 
 ### c. NO₂ Time-Series Analysis
 
--   Is the NO₂ series stationary?\
--   How do environmental variables and SAPRC-derived biochemical outputs correlate with NO₂?\
+-   Is the NO₂ series stationary?
+-   How do environmental variables and SAPRC-derived biochemical outputs correlate with NO₂?
 -   Does a hybrid SARIMAX + SAPRC model outperform SARIMAX alone?
 
 ### d. Machine Learning Comparison
 
--   Which ML technique (e.g., XGBoost, SVR) performs best for pollutant prediction?\
+-   Which ML technique (e.g., KNN, Random Forest) performs best for pollutant prediction?
 -   Are time-series approaches superior to non-time-series methods?
+-   Can unsupervised learning be applied to this dataset?
 
 ## Planned Modeling Approaches
 
@@ -62,9 +63,13 @@ This project analyzes the UCI Air Quality Dataset, which contains hourly air pol
 | **AQI Analysis** | Time-series categorization into health risk levels. |
 | **CO Prediction** | Time encoding (hour of day), model comparison (Linear vs. Random Forest). |
 | **NO₂ Hybrid Model** | SARIMAX with SAPRC-derived variables. |
-| **ML Comparison** | Cross-validation, performance metrics (R², RMSE). |
+| **ML Comparison** | ML techniques for regression and classification of pollutants. |
 
 ------------------------------------------------------------------------
+
+## Results
+
+For details, please consult the [final report]("reports/Final Report UCI Air Quality Analysis in Rome.pdf").
 
 ## Authors
 
