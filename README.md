@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project analyzes the UCI Air Quality Dataset, which contains hourly air pollution and weather data from Rome, Italy (March 2004–February 2005). The goal is to explore relationships between pollutants, sensor responses, and environmental factors, and to build predictive models for pollutant concentrations. Key tasks include exploratory data analysis (EDA), sensor calibration assessment, time-series forecasting, and machine learning model development.
+This project analyzes the [UCI Air Quality Dataset](https://archive.ics.uci.edu/dataset/360/air+quality), which contains hourly air pollution and weather data from Rome, Italy (March 2004–February 2005). The goal is to explore relationships between pollutants, sensor responses, and environmental factors, and to build predictive models for pollutant concentrations. Key tasks include exploratory data analysis (EDA), sensor calibration assessment, time-series forecasting, and machine learning model development.
 
 ------------------------------------------------------------------------
 
