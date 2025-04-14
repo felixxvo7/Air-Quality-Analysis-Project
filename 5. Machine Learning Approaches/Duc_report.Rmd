@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```
 
-# Pattern Recognition and Machine Learning for Predicting Pollutant Concentrations and AQI Categories from Sensor and Environmental Data
+# Machine Learning for Predicting Pollutant Concentrations and AQI Categories from Sensor and Environmental Data
 
 ## 1. Regression Analysis for Pollutant Concentrations Using KNN and Random Forest  
 
